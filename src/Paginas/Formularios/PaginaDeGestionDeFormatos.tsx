@@ -1,12 +1,12 @@
 import { FileText } from "lucide-react";
 import PageBreadcrumb from "../../Components/Comun/PageBreadCrumb";
-import CardFormato from "../../Components/Modulos/Formularios/Formato/CardFormato";
 import { useFormatoGetDataStore } from "../../Components/Store/FormatoStore/formatoGetDataStore";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import CardFormato from "../../Components/Modulos/Formularios/CardFormato";
 
 const PaginaDeGestionDeFormatos = () => {
-  const { formatoData, loading, cargarDesdeFirebase } = useFormatoGetDataStore();
+  const { formatoData, loading, cargarFormatos } = useFormatoGetDataStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const PaginaDeGestionDeFormatos = () => {
 
     const cargarDatos = async () => {
       if (formatoData.length === 0 && !loading && mounted) {
-        await cargarDesdeFirebase();
+        await cargarFormatos();
       }
     };
 
@@ -23,7 +23,7 @@ const PaginaDeGestionDeFormatos = () => {
     return () => {
       mounted = false;
     };
-  }, [formatoData, loading, cargarDesdeFirebase]);
+  }, [formatoData, loading, cargarFormatos]);
 
   if (loading) {
     return (
@@ -34,7 +34,7 @@ const PaginaDeGestionDeFormatos = () => {
   }
   return (
     <>
-      <PageBreadcrumb pageTitle="Formatos" />
+      <PageBreadcrumb pageTitle="Gestion de formatos" />
       <div className="p-4 border border-1 border-slate-200 rounded-lg">
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -59,7 +59,7 @@ const PaginaDeGestionDeFormatos = () => {
           </div>
 
           <div
-            onClick={() => navigate(`/formulario/formatos`)}
+            onClick={() => navigate(`formatos/nuevo`)}
             className="cursor-pointer rounded-xl border border-slate-400 bg-white p-5 shadow-sm hover:shadow-md transition group"
           >
             <div className="flex items-center gap-3 mb-3">

@@ -1,51 +1,44 @@
-// equipoGetData.ts
 import { create } from "zustand";
-import { equiposFirebaseData } from "../../data/equipoFirebaseData";
 import type { Equipo } from "../../typesScript/equipoFormType";
-
+import { getEquiposFromFirebase } from "../../Firebase/Service/servicesGet";
+ 
 type EquipoStore = {
   equiposData: Equipo[];
   loading: boolean;
+  error: string | null;
 
-  cargarDesdeFirebase: () => Promise<void>;
-  actualizarEquipo: (id: string, data: Partial<Equipo>) => void;
-  eliminarEquipo: (id: string) => void;
+  cargarEquipos: () => Promise<void>;
+  actualizarEquipoState: (id: string, data: Partial<Equipo>) => void;
+  eliminarEquipoState: (id: string) => void;
 };
 
 export const useEquipoGetDataStore = create<EquipoStore>((set) => ({
   equiposData: [],
   loading: false,
+  error: null,
 
-  cargarDesdeFirebase: async () => {
-    set({ loading: true });
+  cargarEquipos: async () => {
+    set({ loading: true, error: null });
     try {
-      // Tu lógica de carga
-      // const data = await fetchEquipos(); // tu función
-      set({ equiposData: equiposFirebaseData, loading: false });
+      const data = await getEquiposFromFirebase(); // Llamada real a Firebase
+      set({ equiposData: data, loading: false });
     } catch (error) {
-      console.error(error);
-      set({ loading: false });
+      set({ 
+        error: "No se pudieron cargar los equipos", 
+        loading: false 
+      });
     }
   },
-  // cargarDesdeFirebase: async () => {
-  //   set({ loading: true });
 
-  //   // simulamos Firebase
-  //   await new Promise((res) => setTimeout(res, 600));
-
-  //   set({
-  //     equiposData: equiposMock,
-  //     loading: false,
-  //   });
-  // },
-
-  actualizarEquipo: (id, data) => set((state) => ({
+  // Actualiza solo el estado local (UI) después de una edición exitosa
+  actualizarEquipoState: (id, data) => set((state) => ({
     equiposData: state.equiposData.map((eq) =>
       eq.id === id ? { ...eq, ...data } : eq
     ),
   })),
 
-  eliminarEquipo: (id) =>
+  // Elimina del estado local (UI) después de borrar en Firebase
+  eliminarEquipoState: (id) =>
     set((state) => ({
       equiposData: state.equiposData.filter((eq) => eq.id !== id),
     })),

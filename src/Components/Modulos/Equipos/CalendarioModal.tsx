@@ -71,7 +71,7 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
             maxWidth={isOperador ? "sm" : "2xl"}
         >
             {/* SIMULADOR DE ROLES (Ocultar en Prod) */}
-            <div className="mb-6 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+            {/* <div className="mb-6 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
                 <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 text-center">Simulador de Rol</p>
                 <div className="flex justify-center gap-2">
                     {Object.values(UserRole).map((role) => (
@@ -86,7 +86,7 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
                         </button>
                     ))}
                 </div>
-            </div>
+            </div> */}
 
             {/* HEADER DINÁMICO */}
             <div className="flex justify-between items-start mb-6 pb-4 border-b border-slate-100">
@@ -95,21 +95,21 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
                         {modalTitle}
                     </h3>
                     <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white uppercase tracking-tighter">
-                            {equipo.id}
+                        <span className="text-[12px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white uppercase tracking-tighter">
+                            {equipo.placa}
                         </span>
                         <p className="text-[11px] font-bold text-slate-400 uppercase">
-                            {equipo.nombre} • {fechaISO || hoy}
+                            • {fechaISO || hoy}
                         </p>
                     </div>
                 </div>
 
                 {/* BOTÓN DE ACCIÓN (Añadir/Editar) */}
-                {isOperador && (
+                {/* {isOperador && (
                     <button className="p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200 active:scale-95 transition-all">
                         <IconLucide name={registroExistente ? "pencil" : "plus"} size={20} strokeWidth={1} />
                     </button>
-                )}
+                )} */}
             </div>
 
             {/* CONTENIDO PRINCIPAL */}

@@ -1,24 +1,13 @@
-import { useEffect } from "react";
-import PageBreadcrumb from "../../Components/Comun/PageBreadCrumb";
-import StepOneEquipoForm from "../../Components/Modulos/Formularios/EquiposForm/StepOneEquipoForm";
-import { useStepsStore } from "../../Components/Store/useStepsStore";
-import { useNavigate } from "react-router-dom";
+ import PageBreadcrumb from "../../Components/Comun/PageBreadCrumb";
+ import { useNavigate } from "react-router-dom";
 import { LucideArrowLeft } from "lucide-react";
+import EquipoForm from "../../Components/Modulos/Formularios/EquiposForm/EquipoForm";
 
-const steps = [
-  StepOneEquipoForm
-];
+ 
 const PaginaDeEquiposForm = () => {
-  const { step, setMaxSteps } = useStepsStore();
-
-
-
-  useEffect(() => {
-    setMaxSteps(steps.length);
-  }, [setMaxSteps]);
   const navigate = useNavigate();
 
-  const CurrentStep = steps[step - 1];
+ 
   return (
     <>
       <PageBreadcrumb pageTitle="Equipos" />
@@ -28,7 +17,8 @@ const PaginaDeEquiposForm = () => {
       <div className="antialiased text-slate-900 bg-slate-50 min-h-screen">
 
         <div>
-          <CurrentStep />
+           
+          <EquipoForm />
         </div>
       </div>
     </>

@@ -126,7 +126,7 @@ export type ValorCampo =
  * Se crea en PaginaDeFormatosForm (StepOne)
  */
 export interface FormatoGeneral {
-  id?: string; // Generado en BD
+  id: string; // Generado en BD
   nombreFormato: string; // "EXCAVADORA DE ORUGAS"
   version: string; // "1.0"
   fechaCreacion: string; // ISO

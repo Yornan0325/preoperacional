@@ -1,14 +1,14 @@
-import PageBreadcrumb from "../../Components/Comun/PageBreadCrumb";
-import { useSelectedEquipoStore } from "../../Components/Store/EquipoStore/selectedEquipoStore";
+import PageBreadcrumb from "../../Comun/PageBreadCrumb";
+import { useSelectedEquipoStore } from "../../Store/EquipoStore/selectedEquipoStore";
 import { useNavigate } from "react-router-dom";
-import { useStepsStore } from "../../Components/Store/useStepsStore";
+import { useStepsStore } from "../../Store/useStepsStore";
 import { useEffect } from "react";
-import StepOneCheck from "../../Components/Modulos/Equipos/StepOneCheck";
-import StepTwoCheck from "../../Components/Modulos/Equipos/StepTwoCheck";
-import { usePreoperacionalStore } from "../../Components/Store/usePreoperacionalStore";
-import { formatoFirebaseData } from "../../Components/data/formatofirebaseData";
- 
-const PaginaPreoperacionalOperador = () => {
+import StepOneCheck from "./StepOneCheck";
+import StepTwoCheck from "./StepTwoCheck";
+import { usePreoperacionalStore } from "../../Store/usePreoperacionalStore";
+import { formatoFirebaseData } from "../../data/formatofirebaseData";
+
+const CheckListOperador = () => {
     const { equipoActivo } = useSelectedEquipoStore();
     const { fecha, registros } = usePreoperacionalStore();
     const { step, setMaxSteps } = useStepsStore();
@@ -32,7 +32,7 @@ const PaginaPreoperacionalOperador = () => {
         setMaxSteps(steps.length); // Se configura automáticamente
     }, [setMaxSteps]);
     if (!equipoActivo) return <div>No hay equipo seleccionado</div>;
-    if (!formatoDefinicion) return <div>El equipo no tiene un formato válido asignado.</div>;
+    if (!formatoDefinicion) return <div>El equipo no tiene un formato asignado.</div>;
     const CurrentStep = steps[step - 1];
     return (
         <>
@@ -62,4 +62,4 @@ const PaginaPreoperacionalOperador = () => {
     );
 };
 
-export default PaginaPreoperacionalOperador;
+export default CheckListOperador;

@@ -18,7 +18,7 @@ interface Props {
 }
 
 const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: Props) => {
-  const { actualizarEquipo } = useEquipoGetDataStore();
+  const { actualizarEquipoState } = useEquipoGetDataStore();
   const { isOpen, activeModal, closeModal } = useModalStore();
 
   const {
@@ -36,7 +36,7 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
   }, [isOpen, activeModal, equipo, reset]);
 
   const onSubmit = (data: Partial<Equipo>) => {
-    actualizarEquipo(equipo.id, data);
+    actualizarEquipoState(equipo.id, data);
     closeModal();
   };
 
@@ -76,7 +76,7 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
           <input
             className={inputStyles}
             placeholder="Ej. Excavadora CAT-320"
-            {...register("nombre")}
+            {...register("nombreEquipo")}
           />
         </div>
 

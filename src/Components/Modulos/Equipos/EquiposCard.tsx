@@ -10,7 +10,7 @@ interface EquiposCardProps {
 }
 
 const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEditarEquipo }: EquiposCardProps) => {
-  
+
   // Memorizamos el color para no recalcularlo en renders innecesarios
   const statusClasses = useMemo(() => {
     return EstadoEquipoColor[equipo.estado] || "bg-slate-100 text-slate-500";
@@ -25,13 +25,19 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
       .join("")
       .toUpperCase();
   };
+  const capitalizeFirstLetter = (text: string): string => {
+    if (!text) return ""
+
+    const lower = text.toLowerCase()
+    return lower.charAt(0).toUpperCase() + lower.slice(1)
+  }
 
   return (
     <div
-        onClick={(e) => {
-          e.stopPropagation();
-          handleModalCalendario(equipo);
-        }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleModalCalendario(equipo);
+      }}
       className="group bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-xl hover:border-blue-100 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[180px]"
     >
       <div>
@@ -45,7 +51,7 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
               <Tag size={10} /> {equipo.proyecto}
             </span>
           </div>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -61,7 +67,7 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
         <div className="flex gap-4">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-black text-slate-800 leading-none mb-1 truncate group-hover:text-blue-600 transition-colors">
-              {equipo.nombre}
+              {equipo.nombreEquipo}-{equipo.placa}
             </h3>
             <div className="flex items-center gap-1 text-slate-400 mb-3">
               <MapPin size={10} />
@@ -72,13 +78,19 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
           </div>
 
           {/* IMAGEN CON ASPECT RATIO FIJO */}
-          <div className="w-20 h-16 shrink-0 rounded-xl overflow-hidden border border-slate-100 shadow-inner bg-slate-50">
-            <img
-              src={equipo.imagen || "/placeholder-equipo.png"}
-              alt={equipo.nombre}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              loading="lazy"
-            />
+          <div className="w-20 h-16  flex items-center justify-center">
+            {equipo.imagen ? (
+              <img
+                src={equipo.imagen}
+                alt={equipo.nombreEquipo}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-lg">
+                {equipo.nombreEquipo?.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -92,8 +104,8 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
                 {getInitials(equipo.asignadoOperador.nombre)}
               </div>
               <div>
-                <p className="text-[11px] font-black text-slate-800 leading-none">
-                  {equipo.asignadoOperador.nombre}
+                <p className="text-sm font-black text-slate-800 leading-none">
+                  {capitalizeFirstLetter(equipo.asignadoOperador.nombre)}
                 </p>
                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
                   {equipo.asignadoOperador.cargo}
@@ -102,12 +114,11 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
             </div>
           </div>
         ) : (
-          <button 
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              equipo.estado === "MANTENIMIENTO" 
-              ? "bg-rose-50 text-rose-500 cursor-not-allowed" 
+          <button
+            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${equipo.estado === "MANTENIMIENTO"
+              ? "bg-rose-50 text-rose-500 cursor-not-allowed"
               : "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"
-            }`}
+              }`}
             disabled={equipo.estado === "MANTENIMIENTO"}
           >
             {equipo.estado === "MANTENIMIENTO" ? (

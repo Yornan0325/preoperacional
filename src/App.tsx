@@ -1,78 +1,57 @@
-// import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import AppLayout from './Components/layout/AppLayout';
-// import PaginaDeFormatosForm from './Paginas/Formularios/PaginaDeFormatosForm';
-// import PaginaDeEquiposForm from './Paginas/Formularios/PaginaDeEquiposForm';
-// import PaginaDeEquipos from './Paginas/Equipo/PaginaDeEquipos';
-// import PaginaDeGestionDeFormatos from './Paginas/Formularios/PaginaDeGestionDeFormatos';
-// import PaginaPreoperacionalOperador from './Paginas/Equipo/PaginaPreoperacionalOperador';
-
-
-// import { Toaster } from 'react-hot-toast';
-// import PaginaEditorFormato from './Paginas/Formularios/PaginaEditorFormato';
-
-// function App() {
-
-
-//   return (
-//     <>
-//       <Toaster position="top-right" reverseOrder={false} />
-//       <Router>
-//         <Routes>
-//           <Route path="/" element={<AppLayout />} >
-//             <Route path='preoperacional/:id' element={<PaginaPreoperacionalOperador />} />
-//             <Route path='/equipo' element={<PaginaDeEquipos />} />
-//             <Route path='/formulario' element={<PaginaDeGestionDeFormatos />} />
-//             <Route path='/formulario/equipo' element={<PaginaDeEquiposForm />} />
-//             <Route path='/formulario/formatos' element={<PaginaDeFormatosForm />} />
-//             <Route path="/formatos/:id" element={<PaginaEditorFormato />} />
-//           </Route>
-//         </Routes>
-//       </Router>
-//     </>
-//   )
-// }
-
-// export default App
-import { Suspense, lazy } from 'react'; // 1. Importamos lazy y Suspense
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Suspense, lazy, useEffect } from 'react';
 import AppLayout from './Components/layout/AppLayout';
+import { Toaster } from 'react-hot-toast';
+import PaginaDeEquiposForm from './Paginas/Formularios/PaginaDeEquiposForm';
+import { autenticarUsuarioAdmin } from './Components/Hoock/autenticarUsuarioAdmin';
+// import PaginaDeEquipos from './Paginas/Equipo/PaginaDeEquipos';
+// import EditorDePlantillaFormato from './Paginas/Formularios/EditorDePlantillaFormato';
 
-// 2. Carga dinámica de páginas
-const PaginaDeFormatosForm = lazy(() => import('./Paginas/Formularios/PaginaDeFormatosForm'));
-const PaginaDeEquiposForm = lazy(() => import('./Paginas/Formularios/PaginaDeEquiposForm'));
+// Carga perezosa (Lazy Loading) para rendimiento
 const PaginaDeEquipos = lazy(() => import('./Paginas/Equipo/PaginaDeEquipos'));
 const PaginaDeGestionDeFormatos = lazy(() => import('./Paginas/Formularios/PaginaDeGestionDeFormatos'));
-const PaginaPreoperacionalOperador = lazy(() => import('./Paginas/Equipo/PaginaPreoperacionalOperador'));
-const PaginaEditorFormato = lazy(() => import('./Paginas/Formularios/PaginaEditorFormato'));
+const CheckListOperador = lazy(() => import('./Components/Modulos/Equipos/CheckListOperador'));
+const EditorDePlantillaFormato = lazy(() => import('./Components/Modulos/Formularios/EditorDePlantillaFormato'));
 
-// Componente de carga simple
-const LoadingFallback = () => (
+// Fallback de carga
+const Loading = () => (
   <div className="flex justify-center items-center h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
   </div>
 );
 
 function App() {
+  useEffect(() => {
+    autenticarUsuarioAdmin();
+  }, [])
+
   return (
     <>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" />
       <Router>
-        {/* 3. Suspense envuelve las rutas para manejar el estado de carga */}
-        <Suspense fallback={<LoadingFallback />}>
+        <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/" element={<AppLayout />} >
-              {/* Rutas de Operación */}
-              <Route path='preoperacional/:id' element={<PaginaPreoperacionalOperador />} />
-              <Route path='equipo' element={<PaginaDeEquipos />} />
-              
-              {/* Rutas de Gestión/Admin */}
-              <Route path='formulario' element={<PaginaDeGestionDeFormatos />} />
-              <Route path='formulario/equipo' element={<PaginaDeEquiposForm />} />
-              <Route path='formulario/formatos' element={<PaginaDeFormatosForm />} />
-              
-              {/* Editor Técnico */}
-              <Route path="formatos/:id" element={<PaginaEditorFormato />} />
+            {/* Layout Principal */}
+            <Route path="/" element={<AppLayout />}>
+
+              {/* --- VISTA OPERADOR (DÍA A DÍA) --- */}
+              {/* Lista de equipos para inspeccionar */}
+              <Route path="equipo" element={<PaginaDeEquipos />} />
+              {/* El proceso de inspección por pasos */}
+              <Route path="preoperacional/:id" element={<CheckListOperador />} />
+
+              {/* --- VISTA GESTIÓN (ADMINISTRATIVA) --- */}
+              {/* Dashboard de formatos: aquí ves las cards de Equipo y Formato */}
+              <Route path="formulario" element={<PaginaDeGestionDeFormatos />} />
+
+              {/* Gestión de Plantillas (El editor técnico que acabamos de crear) */}
+              {/* Ruta para crear uno desde cero */}
+              <Route path="formulario/formatos/nuevo" element={<EditorDePlantillaFormato />} />
+              {/* Ruta para editar uno existente usando su ID */}
+              <Route path="formulario/formatos/:id" element={<EditorDePlantillaFormato />} />
+
+              {/* Otras rutas de formularios si las necesitas */}
+              <Route path="formulario/equipo" element={<PaginaDeEquiposForm />} />
             </Route>
           </Routes>
         </Suspense>

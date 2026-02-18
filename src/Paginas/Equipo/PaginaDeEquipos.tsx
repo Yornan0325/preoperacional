@@ -27,7 +27,7 @@ const PaginaDeEquipos = () => {
     return equiposData.filter(equipo => {
       const searchLower = searchTerm.toLowerCase();
       const cumpleBusqueda =
-        equipo.nombre?.toLowerCase().includes(searchLower) ||
+        equipo.nombreEquipo?.toLowerCase().includes(searchLower) ||
         equipo.placa?.toLowerCase().includes(searchLower) ||
         equipo.id?.toLowerCase().includes(searchLower);
 
@@ -35,7 +35,7 @@ const PaginaDeEquipos = () => {
         return cumpleBusqueda && equipo.estado === 'MANTENIMIENTO';
       }
       if (filtroActivo === "zona") {
-        return cumpleBusqueda && equipo.zona; // Ajustar según lógica de zona real
+        return cumpleBusqueda && equipo.ubicacion; // Ajustar según lógica de zona real
       }
       return cumpleBusqueda;
     });

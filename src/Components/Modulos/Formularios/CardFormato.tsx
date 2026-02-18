@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
-import type { FormatoSIG } from "../../../typesScript/preoperacionalType";
-
+import type { FormatoSIG } from "../../typesScript/preoperacionalType";
+ 
 interface Props {
   formato: FormatoSIG;
 }
@@ -11,7 +11,7 @@ const CardFormato = ({ formato }: Props) => {
 
   return (
     <div
-      onClick={() => navigate(`/formatos/${formato.id}`)}
+      onClick={() => navigate(`formatos/${formato.id}`)}
       className="cursor-pointer rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition group"
     >
       <div className="flex items-center gap-3 mb-2">
