@@ -1,23 +1,17 @@
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
- import type { Equipo } from '../../typesScript/equipoFormType';
+import { collection, getDocs, query, orderBy, where, documentId } from 'firebase/firestore';
+import type { Equipo } from '../../typesScript/equipoFormType';
 import { db } from '../firebase';
 import type { FormatoPreoperacional } from '../../typesScript/preoperacionalType';
 
 export const getEquiposFromFirebase = async (): Promise<Equipo[]> => {
     try {
-        // Consultamos la colección ordenando por fecha de creación (opcional)
         const equiposRef = collection(db, 'equipos');
-        // const q = query(equiposRef, orderBy('createdAt', 'desc'));
-        
         const querySnapshot = await getDocs(equiposRef);
-        
-        // Mapeamos los documentos a objetos tipo Equipo
-        const equipos = querySnapshot.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id // Nos aseguramos de capturar el ID del documento
-        })) as Equipo[];
 
-        return equipos;
+        return querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id
+        })) as Equipo[];
     } catch (error) {
         console.error("Error al obtener equipos de Firebase:", error);
         throw error;
@@ -27,18 +21,83 @@ export const getEquiposFromFirebase = async (): Promise<Equipo[]> => {
 export const getFormatosFromFirebase = async (): Promise<FormatoPreoperacional[]> => {
     try {
         const formatosRef = collection(db, "plantillas_formatos");
-        // Ordenamos por nombre para que la lista sea alfabética
         const q = query(formatosRef, orderBy("nombreFormato", "asc"));
-        
         const querySnapshot = await getDocs(q);
-        
-        // Mapeamos los resultados a tu interfaz
+
         return querySnapshot.docs.map(doc => ({
             ...doc.data(),
-            id: doc.id // El ID es el nombre limpio que definimos antes
+            id: doc.id
         })) as FormatoPreoperacional[];
     } catch (error) {
         console.error("Error al obtener formatos:", error);
+        throw error;
+    }
+};
+
+export const getEstadoMensualEquipos = async (equipoId: string, mes: string, anio: string) => {
+    // Definimos el rango de IDs basado en el formato: IDequipo_YYYY-MM-DD
+    const prefix = `${equipoId}_${anio}-${mes}`;
+    const inicioId = `${prefix}-01`;
+    const finId = `${prefix}-31`; // El 31 es un límite superior seguro para orden alfabético
+
+    console.log(`📡 Firebase Query: [${inicioId}] hasta [${finId}]`);
+
+    try {
+        // Al filtrar por documentId(), Firestore no requiere índices compuestos
+        const q = query(
+            collection(db, "InspeccionesDiarias"),
+            where(documentId(), ">=", inicioId),
+            where(documentId(), "<=", finId)
+        );
+
+        const querySnapshot = await getDocs(q);
+        const mapaRegistros: Record<string, any> = {};
+
+        console.log(`✅ Resultados Firebase para ${mes}/${anio}:`, querySnapshot.size);
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Descomponemos el ID de forma segura (el último _ es el separador de la fecha)
+            const lastUnderscoreIndex = doc.id.lastIndexOf('_');
+            const idDelEquipo = doc.id.substring(0, lastUnderscoreIndex);
+            const fechaDeInspeccion = doc.id.substring(lastUnderscoreIndex + 1);
+
+            // Usamos la fecha como llave para el mapa mensual
+            const fechaKey = data.fechaInspeccion || fechaDeInspeccion;
+
+            mapaRegistros[fechaKey] = {
+                ...data,
+                id: doc.id,
+                equipoId: data.equipoId || idDelEquipo,
+                fechaInspeccion: data.fechaInspeccion || fechaDeInspeccion
+            };
+        });
+
+        return mapaRegistros;
+    } catch (error) {
+        console.error("❌ Error en getEstadoMensualEquipos:", error);
+        throw error;
+    }
+};
+
+export const getInspeccionesByEquipo = async (equipoId: string) => {
+    try {
+        const q = query(
+            collection(db, "InspeccionesDiarias"),
+            where("equipoId", "==", equipoId),
+            orderBy("fechaInspeccion", "desc")
+        );
+
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id
+        }));
+    } catch (error) {
+        console.error("Error al obtener inspecciones por equipo:", error);
+        if (error instanceof Error && error.message.includes("index")) {
+            console.warn("Se requiere crear un ID compuesto en Firebase para equipoId y fechaInspeccion");
+        }
         throw error;
     }
 };

@@ -294,6 +294,8 @@ export interface InspeccionPreoperacional {
   creadoEn: string; // timestamp
 }
 
+export type Preoperacional = InspeccionPreoperacional;
+
 // ============================================
 // 6. TIPOS AUXILIARES PARA LA UI
 // ============================================

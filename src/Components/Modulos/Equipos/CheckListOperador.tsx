@@ -7,7 +7,7 @@ import { usePreoperacionalStore } from "../../Store/usePreoperacionalStore";
 import { useFormatoGetDataStore } from "../../Store/FormatoStore/formatoGetDataStore";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-// import { useFormatoFormStore } from "../../Store/FormatoStore/useFormatoFormStore";
+import { saveInspeccionDiaria } from "../../Firebase/Service/servicesSet";
 import { ArrowLeftIcon, Camera, Check, PenTool, X } from "lucide-react";
 import Loader from "../../Utils/MensajesEIndicadores/Spinner";
 import useModalStore from "../../Store/modalStore";
@@ -29,29 +29,50 @@ const CheckListOperador = () => {
         fecha ? fecha.toLocaleDateString("es-CO") : null
         , [fecha]);
 
+    const fechaISO = useMemo(() =>
+        fecha?.toLocaleDateString("en-CA")
+        , [fecha]);
+
     const formato = formatoData.find(f => f.id === equipoActivo?.relacionFormato);
-    const datosExistentes = registros.find(r =>
-        r.equipoId === equipoActivo?.id && r.fecha === fechaISO
-    );
+
+    // Cambiamos la lógica para encontrar datos existentes: 
+    // Los registros en el store ya vienen mapeados por fecha como llave si usamos el mapa, 
+    // pero registros[] es un array. Buscamos por equipoId y fechaISO.
+    const datosExistentes = useMemo(() => {
+        if (!registros || !equipoActivo || !fechaISO) return null;
+        return registros.find(r =>
+            r.equipoId === equipoActivo.id && r.fechaInspeccion === fechaISO
+        );
+    }, [registros, equipoActivo, fechaISO]);
+
+    // Sincronizar firma si existe
+    useEffect(() => {
+        if (datosExistentes?.firmaOperador) {
+            setSignatureData(datosExistentes.firmaOperador);
+        }
+    }, [datosExistentes]);
+
     useEffect(() => {
         if (formatoData.length === 0) {
             cargarFormatos();
         }
     }, [formatoData.length, cargarFormatos]);
 
-    useEffect(() => {
-        if (!datosExistentes && formato) {
-            formato.checklist.forEach(campo => {
-                setValue(`respuestas.${campo.id}`, "B");
-            });
-        }
-    }, [formato]);
-
     const defaultChecklistValues = useMemo(() => {
         const acc: any = {};
-        formato?.checklist.forEach((seccion: any) => {
+        if (!formato) return acc;
+
+        // Intentamos reconstruir el objeto de respuestas desde el array plano de Firebase si existe
+        if (datosExistentes?.respuestas && Array.isArray(datosExistentes.respuestas)) {
+            datosExistentes.respuestas.forEach((r: any) => {
+                acc[r.id] = r.valor;
+            });
+            return acc;
+        }
+
+        // Si no hay datos previos, usamos los valores por defecto del formato
+        formato.checklist.forEach((seccion: any) => {
             seccion.items?.forEach((campo: any) => {
-                // Si es booleano o similar, por defecto "B" (Bueno)
                 if (campo.tipo === 'boolean' || campo.tipo === 'checkbox') {
                     acc[campo.id] = "B";
                 } else {
@@ -60,22 +81,41 @@ const CheckListOperador = () => {
             });
         });
         return acc;
-    }, [formato]);
+    }, [formato, datosExistentes]);
 
-    const { register, handleSubmit, watch, setValue, formState: { isValid } } = useForm({
+    const defaultObservations = useMemo(() => {
+        const acc: any = {};
+        if (datosExistentes?.respuestas && Array.isArray(datosExistentes.respuestas)) {
+            datosExistentes.respuestas.forEach((r: any) => {
+                if (r.observacion) acc[r.id] = r.observacion;
+            });
+        }
+        return acc;
+    }, [datosExistentes]);
+
+    const { register, handleSubmit, watch, setValue, reset, formState: { isValid } } = useForm({
         mode: 'onChange',
         defaultValues: {
-            respuestas: datosExistentes?.respuestas || defaultChecklistValues,
-            observaciones: datosExistentes?.observaciones || {}
+            respuestas: defaultChecklistValues,
+            observaciones: defaultObservations
         }
     });
 
-    // const watchRespuestas = watch("respuestas");
-    // const valorActual = watch(`respuestas.${campo.id}`);
-
+    // Resetear el formulario cuando cambian los datos existentes (ej. al navegar entre días)
+    useEffect(() => {
+        if (formato) {
+            reset({
+                respuestas: defaultChecklistValues,
+                observaciones: defaultObservations
+            });
+        }
+    }, [datosExistentes, formato, reset, defaultChecklistValues, defaultObservations]);
 
     // Funciones de firma
-    const clearSignature = () => sigCanvas.current.clear();
+    const clearSignature = () => {
+        sigCanvas.current.clear();
+        setSignatureData(null);
+    };
     const saveSignature = () => {
         if (sigCanvas.current.isEmpty()) {
             toast.error("Por favor, estampe su firma antes de continuar");
@@ -88,7 +128,7 @@ const CheckListOperador = () => {
         toast.success("Firma capturada correctamente");
     };
 
-    const onSubmit = (formData: any) => {
+    const onSubmit = async (formData: any) => {
         if (!signatureData) {
             toast.error("La firma del operador es obligatoria");
             return;
@@ -115,30 +155,46 @@ const CheckListOperador = () => {
             creadoEn: new Date().toISOString().split('T')[0],
             respuestas: respuestasTransformadas,
             firmaOperador: signatureData,
-            estado: "PENDIENTE"
+            estado: "PENDIENTE",
+            // Gestión de Firmas y Estados
+            firmas: {
+                operador: {
+                    firmado: true,
+                    fecha: new Date().toISOString(),
+                    firmaImg: signatureData
+                },
+                inspector: {
+                    firmado: false,
+                    fecha: null,
+                    usuarioId: null
+                },
+                siso: {
+                    firmado: false,
+                    fecha: null,
+                    usuarioId: null
+                },
+                copas: {
+                    firmado: false,
+                    fecha: null,
+                    usuarioId: null
+                }
+            },
+            // El estado global inicial es PENDIENTE hasta que los 3 roles validen
+            estadoGlobal: "PENDIENTE_VALIDACION",
+            progresoFirmas: 1 // (Solo el operador ha firmado)
         };
-        // const payload = {
-        //     equipoId: equipoActivo?.id,
-        //     placa: equipoActivo?.placa,
-        //     formatoId: formato?.id,
-        //     nombreFormato: formato?.nombreFormato,
-        //     fechaInspeccion: fecha?.toISOString().split('T')[0],
-        //     creadoEn: new Date().toISOString().split('T')[0],
-        //     respuestas: formData.respuestas,
-        //     observacionesEspecíficas: formData.observaciones,
-        //     firmaOperador: signatureData,
-        //     estado: "PENDIENTE" // Para flujo de aprobación posterior
-        // };
-
-        console.log("Payload para Firebase:", payload);
-        toast.success('Inspección guardada localmente (Falta conectar Service)');
-        // Aquí llamarías a: await saveInspeccion(payload);
+        // Guardar en Firebase
+        try {
+            await saveInspeccionDiaria(payload);
+            toast.success('Inspección guardada correctamente');
+            navigate(-1);
+        } catch (error) {
+            console.error("Error al guardar:", error);
+            toast.error('Error al guardar la inspección');
+        }
     };
 
 
-
-
-    const fechaISO = fecha?.toLocaleDateString("en-CA");
 
 
     const handleVolver = () => {
@@ -284,7 +340,7 @@ const CheckListOperador = () => {
                                 </section>
                             ))}
 
-                            {/* FIRMA COMPACTA */}
+                            {/* FIRMA OPERADOR */}
                             <div
                                 onClick={() => setIsModalOpen(true)}
                                 className={`w-full py-6 rounded-3xl border-2 border-dashed flex flex-col items-center justify-center transition-all
@@ -294,8 +350,10 @@ const CheckListOperador = () => {
                                     <img src={signatureData} alt="Firma" className="h-16 object-contain mix-blend-multiply" />
                                 ) : (
                                     <div className="flex flex-col items-center">
-                                        <PenTool size={20} className="text-slate-300 mb-1" />
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Firma requerida</span>
+                                        <PenTool size={20} className="text-slate-300 mb-2" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center px-4">
+                                            Toque aquí para firmar el reporte diario
+                                        </span>
                                     </div>
                                 )}
                             </div>

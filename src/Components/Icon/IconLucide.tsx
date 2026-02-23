@@ -60,6 +60,8 @@ import {
   CalendarX,
   ShieldCheck,
   CloudBackup,
+  HardHat,
+  Download,
 } from "lucide-react";
 
 type IconName =
@@ -124,16 +126,18 @@ type IconName =
   | "shieldCheck"
   | "penTool"
   | "cloudBackup"
+  | "hardHat"
+  | "download"
 
 const icons: Record<IconName, React.ElementType> = {
   truck: Truck, // Camion
   menu: Menu, // Menu amburguesa
-  penTool:PenTool, // Lapiz
+  penTool: PenTool, // Lapiz
   dollarSignIcon: DollarSignIcon, // Peso
-  fileQuestion:FileQuestion, // Archivo de pregunta
-  signature:Signature, // Firma
-  shieldCheck:ShieldCheck, // Escudo con check
-  fileCheck2:FileCheck2, // Archivo de check
+  fileQuestion: FileQuestion, // Archivo de pregunta
+  signature: Signature, // Firma
+  shieldCheck: ShieldCheck, // Escudo con check
+  fileCheck2: FileCheck2, // Archivo de check
   chevronDown: ChevronDown, // Flecha abajo
   package: Package, // Paquete
   star: Star, // Estrella
@@ -149,8 +153,8 @@ const icons: Record<IconName, React.ElementType> = {
   arrowRightLeft: ArrowRightLeft, // Flecha derecha e izquierda
   plus: Plus, // Mas
   ellipsisVertical: EllipsisVertical, // Puntos verticales
-  triangleAlert:TriangleAlert, // Triangulo de alerta
-  scanLine:ScanLine, // Linea de escaneo
+  triangleAlert: TriangleAlert, // Triangulo de alerta
+  scanLine: ScanLine, // Linea de escaneo
   eyeOff: EyeOff, // Ojo apagado
   eye: Eye, // Ojo
   bolt: Bolt, // Rayo
@@ -163,29 +167,31 @@ const icons: Record<IconName, React.ElementType> = {
   folder: Folder, // Carpeta
   wifi: Wifi, // Wifi
   wifiOff: WifiOff, // Wifi apagado
-  bluetooth:Bluetooth, // Bluetooth
+  bluetooth: Bluetooth, // Bluetooth
   info: Info, // Informacion
-  x:X, // X
-  userPen:UserPen, // Lapiz
-  minus:Minus, // Menos
+  x: X, // X
+  userPen: UserPen, // Lapiz
+  minus: Minus, // Menos
   trash: Trash, // Basura
-  checkCircle:CheckCircle, // Check
+  checkCircle: CheckCircle, // Check
   home: Home, // Casa
   settings: Settings, // Ajustes
   bell: Bell, // Campana
   printer: Printer, // Impresora
   moreVertical: MoreVertical, // Puntos verticales
-  boxes:Boxes, // Cajas
-  layers:Layers, // Capas
-  dollarSign:DollarSign, // Peso
-  percent:Percent, // Porcentaje
-  arrowRight:ArrowRight, // Flecha derecha
-  form:Form, // Formulario
-  clipboardCheck:ClipboardCheck, // Portapapeles con check
-  alertCircle:AlertCircle, // Alerta
-  calendarX:CalendarX, // Calendario con X
-  pencil:Pencil, // Lapiz
-  cloudBackup:CloudBackup
+  boxes: Boxes, // Cajas
+  layers: Layers, // Capas
+  dollarSign: DollarSign, // Peso
+  percent: Percent, // Porcentaje
+  arrowRight: ArrowRight, // Flecha derecha
+  form: Form, // Formulario
+  clipboardCheck: ClipboardCheck, // Portapapeles con check
+  alertCircle: AlertCircle, // Alerta
+  calendarX: CalendarX, // Calendario con X
+  pencil: Pencil, // Lapiz
+  cloudBackup: CloudBackup,
+  hardHat: HardHat,
+  download: Download
 };
 
 interface IconProps {

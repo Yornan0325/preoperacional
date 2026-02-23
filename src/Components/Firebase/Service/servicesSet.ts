@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 // import type { Equipo } from '../../typesScript/equipoFormType';
 import type { FormatoCompleto } from '../../typesScript/preoperacionalType';
@@ -122,4 +122,61 @@ export const updateEquipoInFirebase = async (id: string, data: Partial<any>) => 
     // Usamos el ID del equipo para encontrar el documento en la colección 'equipos'
     const equipoRef = doc(db, "equipos", id);
     return await updateDoc(equipoRef, data);
+};
+
+export const saveInspeccionDiaria = async (payload: any) => {
+    try {
+        const id = `${payload.equipoId}_${payload.fechaInspeccion}`;
+        const ref = doc(db, "InspeccionesDiarias", id);
+        await setDoc(ref, payload, { merge: true });
+        return id;
+    } catch (error) {
+        console.error("Error al guardar inspección:", error);
+        throw error;
+    }
+};
+
+/**
+ * Firma masivamente múltiples inspecciones para un equipo
+ */
+export const bulkSignInspecciones = async (
+    equipoId: string,
+    fechas: string[],
+    rol: string,
+    firmaImg: string
+) => {
+    console.log(`🛠️ [bulkSignInspecciones] Iniciando para ${fechas.length} documentos. Rol: ${rol}`);
+
+    try {
+        const batch = fechas.map(async (fechaISO) => {
+            const docId = `${equipoId}_${fechaISO}`;
+            const ref = doc(db, "InspeccionesDiarias", docId);
+
+            // Mapeo de roles internos de firma
+            let campoFirma = rol.toLowerCase();
+            if (rol === 'SUPERVISOR') campoFirma = 'inspector';
+            if (rol === 'ADMIN' || rol === 'COPAS') campoFirma = 'copas';
+
+            console.log(`📝 Actualizando documento: ${docId}, campo: firmas.${campoFirma}`);
+
+            const updateData = {
+                [`firmas.${campoFirma}`]: {
+                    firmado: true,
+                    fecha: new Date().toISOString(),
+                    firmaImg: firmaImg
+                },
+                progresoFirmas: increment(1),
+                updatedAt: serverTimestamp()
+            };
+
+            return updateDoc(ref, updateData);
+        });
+
+        await Promise.all(batch);
+        console.log("✅ [bulkSignInspecciones] Todas las firmas guardadas con éxito.");
+        return true;
+    } catch (error) {
+        console.error("❌ [bulkSignInspecciones] Error al guardar firmas:", error);
+        throw error;
+    }
 };

@@ -2,6 +2,8 @@ import React, { useMemo } from "react";
 import { Pencil, UserPlus, MapPin, Tag } from "lucide-react";
 import type { Equipo } from "../../typesScript/equipoFormType";
 import { EstadoEquipoColor } from "../../Utils/opciones";
+import BadgeEstadoFirmas from "./BadgeEstadoFirmas";
+import { usePreoperacionalStore } from "../../Store/usePreoperacionalStore";
 
 interface EquiposCardProps {
   equipo: Equipo;
@@ -10,6 +12,17 @@ interface EquiposCardProps {
 }
 
 const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEditarEquipo }: EquiposCardProps) => {
+
+  const { registros } = usePreoperacionalStore();
+
+  // Obtenemos la fecha de hoy en formato ISO (YYYY-MM-DD) para buscar el registro
+  const hoy = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
+
+  // Buscamos si existe un registro para hoy de este equipo
+  const reg = useMemo(() => {
+    if (!registros || !Array.isArray(registros)) return null;
+    return registros.find(r => r.equipoId === equipo.id && r.fechaInspeccion === hoy);
+  }, [registros, equipo.id, hoy]);
 
   // Memorizamos el color para no recalcularlo en renders innecesarios
   const statusClasses = useMemo(() => {
@@ -38,7 +51,7 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
         e.stopPropagation();
         handleModalCalendario(equipo);
       }}
-      className="group bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-xl hover:border-blue-100 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[180px]"
+      className="group bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-500 cursor-pointer flex flex-col justify-between min-h-[220px] relative"
     >
       <div>
         {/* INFO SUPERIOR: Badge y Proyecto */}
@@ -104,7 +117,7 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-sm">
                 {getInitials(equipo.asignadoOperador.nombre)}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-black text-slate-800 leading-none">
                   {capitalizeFirstLetter(equipo.asignadoOperador.nombre)}
                 </p>
@@ -133,6 +146,24 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
           </button>
         )}
       </div>
+
+      {/* ESTADO DE FIRMAS */}
+      {reg && (
+        <div className="mt-2">
+          <BadgeEstadoFirmas
+            inspector={reg.firmas?.inspector?.firmado || false}
+            siso={reg.firmas?.siso?.firmado || false}
+            copas={reg.firmas?.copas?.firmado || false}
+          />
+        </div>
+      )}
+
+      {/* BADGE DE ESTADO GLOBAL (NUEVO) */}
+      {/* <div className="absolute top-3 right-3 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight ${statusClasses}`}>
+          {equipo.estado}
+        </span>
+      </div> */}
     </div>
   );
 });
