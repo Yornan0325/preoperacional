@@ -1,9 +1,10 @@
 import { useForm } from "react-hook-form";
 import { useEquipoGetDataStore } from "../../Store/EquipoStore/equipoGetDataStore";
+import { useFormatoGetDataStore } from "../../Store/FormatoStore/formatoGetDataStore"; // Nuevo import
 import useModalStore from "../../Store/modalStore";
 import IconLucide from "../../Icon/IconLucide";
 import { Modal } from "../../ui/Modal";
-import { ESTADOS_EQUIPO_OPTIONS } from "../../Constants/opciones";
+import { ESTADOS_EQUIPO_OPTIONS } from "../../Utils/opciones";
 import { useEffect } from "react";
 import type { Equipo, EstadoEquipo } from "../../typesScript/equipoFormType";
 
@@ -14,12 +15,14 @@ interface Props {
     label: string;
     icon?: string;
   }[];
-  
 }
 
 const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: Props) => {
-  const { actualizarEquipoState } = useEquipoGetDataStore();
+  const { actualizarEquipo } = useEquipoGetDataStore();
   const { isOpen, activeModal, closeModal } = useModalStore();
+
+  // Traemos los formatos disponibles
+  const { formatoData, cargarFormatos } = useFormatoGetDataStore();
 
   const {
     register,
@@ -29,14 +32,18 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
     defaultValues: equipo,
   });
 
+  // Cargar formatos si el modal se abre y la lista está vacía
   useEffect(() => {
-    if (isOpen && activeModal === `editarEquipo-${equipo}`) {
+    if (isOpen && activeModal === `editarEquipo-${equipo.id}`) {
       reset(equipo);
+      if (formatoData.length === 0) {
+        cargarFormatos();
+      }
     }
-  }, [isOpen, activeModal, equipo, reset]);
+  }, [isOpen, activeModal, equipo, reset, formatoData.length, cargarFormatos]);
 
   const onSubmit = (data: Partial<Equipo>) => {
-    actualizarEquipoState(equipo.id, data);
+    actualizarEquipo(equipo.id, data);
     closeModal();
   };
 
@@ -61,16 +68,16 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
             Editar Equipo
           </h3>
           <p className="text-xs font-medium text-slate-400 flex items-center gap-1">
-            <span className="opacity-60">ID REFERENCIA:</span>
-            <code className="bg-slate-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-blue-600 dark:text-blue-400 font-mono">
-              {equipo.id}
-            </code>
+            <span className="opacity-60 uppercase">Referencia:</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200">
+              {equipo.placa}
+            </span>
           </p>
         </div>
       </div>
 
-      {/* FORM */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* NOMBRE */}
         <div>
           <label className={labelStyles}>Nombre del Equipo</label>
           <input
@@ -80,6 +87,7 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
           />
         </div>
 
+        {/* PROYECTO Y UBICACIÓN */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelStyles}>Proyecto</label>
@@ -100,9 +108,33 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
           </div>
         </div>
 
+        {/* SELECCIÓN DE FORMATO (RELACIÓN) */}
+        <div>
+          <label className={labelStyles}>Formato / Plantilla Asociada</label>
+          <div className="relative">
+            <select
+              className={`${inputStyles} appearance-none`}
+              {...register("relacionFormato")}
+            >
+              <option value="" disabled>Seleccione una plantilla</option>
+              {formatoData.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.nombreFormato}.{f.id}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+              <IconLucide name="chevronDown" size={16} strokeWidth={1} />
+            </div>
+          </div>
+          <p className="mt-1.5 text-[10px] text-slate-400 italic">
+            * Define qué checklist verá el operador.
+          </p>
+        </div>
+
+        {/* ESTADO OPERATIVO */}
         <div>
           <label className={labelStyles}>Estado Operativo</label>
-
           <div className="relative">
             <select
               className={`${inputStyles} appearance-none`}
@@ -114,7 +146,6 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
                 </option>
               ))}
             </select>
-
             <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
               <IconLucide name="chevronDown" size={16} strokeWidth={1} />
             </div>
@@ -124,10 +155,17 @@ const EditarEquipoModal = ({ equipo, estados = ESTADOS_EQUIPO_OPTIONS as any }: 
         {/* FOOTER */}
         <div className="mt-10 flex flex-col-reverse sm:flex-row gap-3">
           <button
+            type="button"
+            onClick={closeModal}
+            className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
             type="submit"
             className="flex-[2] flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all"
           >
-            <IconLucide size={20} name="plus" strokeWidth={1} />
+            <IconLucide size={20} name="cloudBackup" strokeWidth={1} />
             Guardar Cambios
           </button>
         </div>

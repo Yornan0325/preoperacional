@@ -59,6 +59,7 @@ import {
   AlertCircle,
   CalendarX,
   ShieldCheck,
+  CloudBackup,
 } from "lucide-react";
 
 type IconName =
@@ -122,6 +123,7 @@ type IconName =
   | "calendarX"
   | "shieldCheck"
   | "penTool"
+  | "cloudBackup"
 
 const icons: Record<IconName, React.ElementType> = {
   truck: Truck, // Camion
@@ -183,6 +185,7 @@ const icons: Record<IconName, React.ElementType> = {
   alertCircle:AlertCircle, // Alerta
   calendarX:CalendarX, // Calendario con X
   pencil:Pencil, // Lapiz
+  cloudBackup:CloudBackup
 };
 
 interface IconProps {

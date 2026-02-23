@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, Loader2, RotateCcw, Search } from "lucide-react";
+import { ChevronLeft, RotateCcw, Search } from "lucide-react";
 import PageBreadcrumb from "../../Components/Comun/PageBreadCrumb";
 import { useEquipoGetDataStore } from "../../Components/Store/EquipoStore/equipoGetDataStore";
 import useModalStore from "../../Components/Store/modalStore";
@@ -8,6 +8,7 @@ import type { Equipo } from "../../Components/typesScript/equipoFormType";
 import EquiposCard from "../../Components/Modulos/Equipos/EquiposCard";
 import EditarEquipoModal from "../../Components/Modulos/Equipos/EditarEquipoModal";
 import CalendarioModal from "../../Components/Modulos/Equipos/CalendarioModal";
+import Loader from "../../Components/Utils/MensajesEIndicadores/Spinner";
 
 const PaginaDeEquipos = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,11 +17,11 @@ const PaginaDeEquipos = () => {
   const { setEquipo } = useSelectedEquipoStore();
   const equiposData = useEquipoGetDataStore(state => state.equiposData);
   const loading = useEquipoGetDataStore(state => state.loading);
-  const cargarDesdeFirebase = useEquipoGetDataStore(state => state.cargarDesdeFirebase);
+  const cargarEquipos = useEquipoGetDataStore(state => state.cargarEquipos);
   const equipoActivo = useSelectedEquipoStore((state) => state.equipoActivo);
 
   useEffect(() => {
-    if (equiposData.length === 0) cargarDesdeFirebase();
+    if (equiposData.length === 0) cargarEquipos();
   }, []);
 
   const equiposFiltrados = useMemo(() => {
@@ -51,15 +52,12 @@ const PaginaDeEquipos = () => {
     openModal(`editarEquipo-${equipo.id}`);
   };
 
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="animate-spin text-blue-600" size={40} />
-        <p className="text-slate-500 font-medium tracking-tight">Cargando equipos...</p>
-      </div>
+      <Loader />
     );
   }
-
   return (
     <>
       <PageBreadcrumb pageTitle="Equipos y Maquinaria" />
@@ -70,7 +68,7 @@ const PaginaDeEquipos = () => {
           <button onClick={() => window.history.back()} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <ChevronLeft size={22} className="text-slate-600" />
           </button>
-          <button onClick={() => cargarDesdeFirebase()} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={() => cargarEquipos()} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <RotateCcw size={18} className="text-slate-600" />
           </button>
         </header>
@@ -96,8 +94,8 @@ const PaginaDeEquipos = () => {
                   key={filtro}
                   onClick={() => setFiltroActivo(filtro)}
                   className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${filtroActivo === filtro
-                      ? "bg-slate-900 text-white shadow-lg"
-                      : "bg-white border border-slate-200 text-slate-500 hover:border-slate-300"
+                    ? "bg-slate-900 text-white shadow-lg"
+                    : "bg-white border border-slate-200 text-slate-500 hover:border-slate-300"
                     }`}
                 >
                   {filtro}

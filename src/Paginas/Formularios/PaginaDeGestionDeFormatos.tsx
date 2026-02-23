@@ -3,7 +3,8 @@ import PageBreadcrumb from "../../Components/Comun/PageBreadCrumb";
 import { useFormatoGetDataStore } from "../../Components/Store/FormatoStore/formatoGetDataStore";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import CardFormato from "../../Components/Modulos/Formularios/CardFormato";
+import Loader from "../../Components/Utils/MensajesEIndicadores/Spinner";
+import FormatoCard from "../../Components/Modulos/Formularios/FormatosCard";
 
 const PaginaDeGestionDeFormatos = () => {
   const { formatoData, loading, cargarFormatos } = useFormatoGetDataStore();
@@ -27,9 +28,7 @@ const PaginaDeGestionDeFormatos = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Loader />
     );
   }
   return (
@@ -88,7 +87,12 @@ const PaginaDeGestionDeFormatos = () => {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {formatoData.map((formato) => (
-              <CardFormato key={formato.id} formato={formato} />
+              <FormatoCard
+                key={formato.id}
+                formato={formato}
+                onEdit={(id) => navigate(`/formulario/formatos/${id}`)}
+                onDelete={(id) => console.log("Eliminar", id)}
+              />
             ))}
           </div>
         )}

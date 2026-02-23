@@ -4,6 +4,7 @@ import AppLayout from './Components/layout/AppLayout';
 import { Toaster } from 'react-hot-toast';
 import PaginaDeEquiposForm from './Paginas/Formularios/PaginaDeEquiposForm';
 import { autenticarUsuarioAdmin } from './Components/Hoock/autenticarUsuarioAdmin';
+import TestFb from './testfb';
 // import PaginaDeEquipos from './Paginas/Equipo/PaginaDeEquipos';
 // import EditorDePlantillaFormato from './Paginas/Formularios/EditorDePlantillaFormato';
 
@@ -34,11 +35,13 @@ function App() {
             {/* Layout Principal */}
             <Route path="/" element={<AppLayout />}>
 
+              <Route path="/prueba" element={<TestFb />} />
+
               {/* --- VISTA OPERADOR (DÍA A DÍA) --- */}
               {/* Lista de equipos para inspeccionar */}
               <Route path="equipo" element={<PaginaDeEquipos />} />
               {/* El proceso de inspección por pasos */}
-              <Route path="preoperacional/:id" element={<CheckListOperador />} />
+              <Route path="equipo/preoperacional/:id" element={<CheckListOperador />} />
 
               {/* --- VISTA GESTIÓN (ADMINISTRATIVA) --- */}
               {/* Dashboard de formatos: aquí ves las cards de Equipo y Formato */}

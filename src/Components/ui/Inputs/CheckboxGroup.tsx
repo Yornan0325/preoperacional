@@ -1,4 +1,4 @@
-import type { OptionItem } from "../../Constants/opciones";
+import type { OptionItem } from "../../Utils/opciones";
 
 
 type Props = {

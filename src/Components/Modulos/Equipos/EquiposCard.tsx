@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Pencil, UserPlus, MapPin, Tag } from "lucide-react";
 import type { Equipo } from "../../typesScript/equipoFormType";
-import { EstadoEquipoColor } from "../../Constants/opciones";
+import { EstadoEquipoColor } from "../../Utils/opciones";
 
 interface EquiposCardProps {
   equipo: Equipo;
@@ -48,7 +48,8 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
               {equipo.estado}
             </span>
             <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-slate-100 text-slate-500 flex items-center gap-1">
-              <Tag size={10} /> {equipo.proyecto}
+              {/* {/* <Tag size={10} />  */}
+              <MapPin size={10} />{equipo.proyecto} • {equipo.ubicacion}
             </span>
           </div>
 
@@ -70,9 +71,9 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
               {equipo.nombreEquipo}-{equipo.placa}
             </h3>
             <div className="flex items-center gap-1 text-slate-400 mb-3">
-              <MapPin size={10} />
-              <p className="text-[10px] font-bold uppercase truncate">
-                {equipo.id} • {equipo.ubicacion}
+              <Tag size={10} />
+              <p className="text-[10px] font-bold">
+                {equipo.marca}
               </p>
             </div>
           </div>

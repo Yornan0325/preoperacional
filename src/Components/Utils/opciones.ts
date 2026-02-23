@@ -1,5 +1,4 @@
- // import type { OptionItem } from "../typesScript/typeformatoRegistro";
-
+ 
 import { estadoEquipo } from "../typesScript/equipoFormType";
 
 export type OptionItem = {

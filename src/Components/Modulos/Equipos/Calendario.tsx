@@ -4,14 +4,13 @@ import { useMemo, useCallback } from "react";
 import { useSelectedEquipoStore } from "../../Store/EquipoStore/selectedEquipoStore";
 import { usePreoperacionalStore } from "../../Store/usePreoperacionalStore";
 import "./CalendarCustomStyles.css";
+import useModalStore from "../../Store/modalStore";
 
 const Calendario = () => {
   const navigate = useNavigate();
   const { equipoActivo } = useSelectedEquipoStore();
   const { registros, fecha, setFecha } = usePreoperacionalStore();
-
-  // MEJORA DE RENDIMIENTO: Indexar registros por fecha (Hash Map)
-  // Esto evita usar .find() cientos de veces por renderizado
+  const { closeModal } = useModalStore();
   const registrosMap = useMemo(() => {
     if (!equipoActivo) return {};
     return registros
@@ -32,7 +31,7 @@ const Calendario = () => {
   // Clase CSS dinámica para el fondo del día
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view !== "month") return "tile-default";
-    
+
     const reg = getRegistro(date);
     if (!reg) return "tile-default";
 
@@ -55,26 +54,27 @@ const Calendario = () => {
     return (
       <div className="flex flex-col items-center mt-1 pointer-events-none">
         <span
-          className={`text-[7px] font-black tracking-tighter leading-none px-1 py-0.5 rounded-[2px] border ${
-            reg.firmaCis
-              ? "text-blue-600 bg-blue-50 border-blue-100"
-              : "text-slate-300 bg-transparent border-slate-100"
-          }`}
+          className={`text-[7px] font-black tracking-tighter leading-none px-1 py-0.5 rounded-[2px] border ${reg.firmaCis
+            ? "text-blue-600 bg-blue-50 border-blue-100"
+            : "text-slate-300 bg-transparent border-slate-100"
+            }`}
         >
           CIS
         </span>
-        <div className={`w-1 h-1 rounded-full mt-1 ${
-          reg.estado === "RECHAZADO" ? "bg-rose-500" : "bg-current opacity-40"
-        }`} />
+        <div className={`w-1 h-1 rounded-full mt-1 ${reg.estado === "RECHAZADO" ? "bg-rose-500" : "bg-current opacity-40"
+          }`} />
       </div>
     );
   };
 
   const handleDayClick = (date: Date) => {
     setFecha(date);
-    // Nota: El operador llena el preoperacional, pero el Admin podría querer ver el reporte
-    // Asegúrate de que esta ruta maneje ambos casos
-    navigate(`/preoperacional/${equipoActivo.id}`);
+    navigate(`preoperacional/${equipoActivo.placa}`);
+
+    setTimeout(() => {
+      closeModal();
+    }, 2000);
+
   };
 
   return (
