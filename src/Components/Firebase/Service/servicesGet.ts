@@ -38,9 +38,9 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
     // Definimos el rango de IDs basado en el formato: IDequipo_YYYY-MM-DD
     const prefix = `${equipoId}_${anio}-${mes}`;
     const inicioId = `${prefix}-01`;
-    const finId = `${prefix}-31`; // El 31 es un límite superior seguro para orden alfabético
+    const finId = `${prefix}-31`; 
 
-    console.log(`📡 Firebase Query: [${inicioId}] hasta [${finId}]`);
+    // console.log(`📡 Firebase Query: [${inicioId}] hasta [${finId}]`);
 
     try {
         // Al filtrar por documentId(), Firestore no requiere índices compuestos
@@ -53,7 +53,7 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
         const querySnapshot = await getDocs(q);
         const mapaRegistros: Record<string, any> = {};
 
-        console.log(`✅ Resultados Firebase para ${mes}/${anio}:`, querySnapshot.size);
+        // console.log(`✅ Resultados Firebase para ${mes}/${anio}:`, querySnapshot.size);
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
@@ -80,24 +80,24 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
     }
 };
 
-export const getInspeccionesByEquipo = async (equipoId: string) => {
-    try {
-        const q = query(
-            collection(db, "InspeccionesDiarias"),
-            where("equipoId", "==", equipoId),
-            orderBy("fechaInspeccion", "desc")
-        );
+// export const getInspeccionesByEquipo = async (equipoId: string) => {
+//     try {
+//         const q = query(
+//             collection(db, "InspeccionesDiarias"),
+//             where("equipoId", "==", equipoId),
+//             orderBy("fechaInspeccion", "desc")
+//         );
 
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id
-        }));
-    } catch (error) {
-        console.error("Error al obtener inspecciones por equipo:", error);
-        if (error instanceof Error && error.message.includes("index")) {
-            console.warn("Se requiere crear un ID compuesto en Firebase para equipoId y fechaInspeccion");
-        }
-        throw error;
-    }
-};
+//         const querySnapshot = await getDocs(q);
+//         return querySnapshot.docs.map(doc => ({
+//             ...doc.data(),
+//             id: doc.id
+//         }));
+//     } catch (error) {
+//         console.error("Error al obtener inspecciones por equipo:", error);
+//         if (error instanceof Error && error.message.includes("index")) {
+//             console.warn("Se requiere crear un ID compuesto en Firebase para equipoId y fechaInspeccion");
+//         }
+//         throw error;
+//     }
+// };

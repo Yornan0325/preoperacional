@@ -284,7 +284,7 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
                                         </div>
 
                                         {/* SECCIÓN DE FIRMAS REDUCIDA EN ALTO */}
-                                        <div className="grid grid-cols-3 gap-0 border-2">
+                                        <div className="grid grid-cols-4 gap-0 border-2">
                                             <div className="flex flex-col">
                                                 <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">Operador</div>
                                                 <div className="h-20 flex items-center justify-center p-3 relative">
@@ -300,6 +300,13 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
                                                     {registroActual.firmas?.siso?.firmado ? <img src={registroActual.firmas.siso.firmaImg} className="h-full object-contain mix-blend-multiply" /> : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>}
                                                 </div>
                                                 <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Coord. SST</div>
+                                            </div>
+                                             <div className="flex flex-col">
+                                                <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">COORDINADOR</div>
+                                                <div className="h-20 flex items-center justify-center p-3">
+                                                    {registroActual.firmas?.copas?.firmado ? <img src={registroActual.firmas.inspector.firmaImg} className="h-full object-contain mix-blend-multiply" /> : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>}
+                                                </div>
+                                                <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Delegado</div>
                                             </div>
                                             <div className="flex flex-col">
                                                 <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">COPASST</div>

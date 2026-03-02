@@ -26,7 +26,7 @@ export const EstadoDiaCalendario = ({ firmas }: { firmas: RegistroFirmas }) => {
                             : 'bg-slate-100 text-slate-400'
                             }`}
                     >
-                        <Icon size={8} strokeWidth={2.5} />
+                        <Icon size={12} strokeWidth={1} />
                     </div>
                 );
             })}
