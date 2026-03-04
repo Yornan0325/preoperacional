@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useFormatoGetDataStore } from "../../Store/FormatoStore/formatoGetDataStore";
+import { auth } from "../../Firebase/firebase";
+import { obtenerUsuarioRegistrado } from "../../Hoock/autenticarUsuarioAdmin";
 
 interface VisualizadorReporteProps {
     onClose: () => void;
@@ -14,14 +16,20 @@ interface VisualizadorReporteProps {
 
 const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equipo, registros }) => {
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
     const reportRef = useRef<HTMLDivElement>(null);
     const { formatoData, cargarFormatos } = useFormatoGetDataStore();
-
+    const roles = ['OPERADOR', 'COORDINADOR', 'COPASST', 'SISO'];
     useEffect(() => {
         if (formatoData.length === 0) {
             cargarFormatos();
         }
     }, [formatoData, cargarFormatos]);
+
+
+
+    // operadorCerrado se calcula por cada registro dentro del map, ya que registroActual
+    // solo existe en ese ámbito.
 
     const handleDownloadPDF = async () => {
         if (!reportRef.current) return;
@@ -109,10 +117,13 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
             }
 
             // 4. METADATOS Y GUARDADO
+            // Intentamos obtener el nombre del usuario autenticado desde la colección 'users'
+
+
+
             pdf.setProperties({
                 title: `Reporte Consolidado ${equipo.placa}`,
                 subject: 'Inspección de Equipos',
-                author: 'Sistema Preoperacional'
             });
 
             pdf.save(`Reporte_Consolidado_${equipo.placa}_${new Date().getTime()}.pdf`);
@@ -128,7 +139,7 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
 
     if (!registros || registros.length === 0) {
         return (
-            <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-120 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6">
                 <div className="bg-white p-8 rounded-3xl text-center">
                     <IconLucide name="alertCircle" size={48} strokeWidth={1} className="text-amber-500 mx-auto mb-4" />
                     <h3 className="text-lg font-black uppercase">No hay reportes seleccionados</h3>
@@ -139,8 +150,8 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
     }
 
     return (
-        <div className="fixed inset-0 z-[120] bg-slate-450/90 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 overflow-hidden">
-            <div className="bg-white w-full h-full md:max-w-6xl md:h-[95vh] md:rounded-[2rem] flex flex-col animate-in zoom-in-95 duration-500 overflow-hidden">
+        <div className="fixed inset-0 z-120 bg-slate-450/90 backdrop-blur-xl flex items-center justify-center p-0 md:p-6 overflow-hidden">
+            <div className="bg-white w-full h-full md:max-w-6xl md:h-[95vh] md:rounded-4xl flex flex-col animate-in zoom-in-95 duration-500 overflow-hidden">
 
                 {/* CABECERA PREMIUM */}
                 <div className="px-8 py-6 bg-slate-900 text-white flex shrink-0 items-center justify-between z-20">
@@ -179,9 +190,9 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
 
                 <div className="flex-1 flex overflow-hidden bg-white">
                     {/* CONTENIDO DEL REPORTE (ZONA DE CAPTURA) */}
+
                     <div className="flex-1 flex flex-col overflow-y-auto p-4 md:p-8">
                         <div ref={reportRef} className="bg-white w-full max-w-4xl mx-auto space-y-16 pb-20">
-
                             {registros.map((registroActual) => {
                                 const secciones = registroActual.respuestas?.reduce((acc: any, item: any) => {
                                     const sec = item.seccion || "General";
@@ -190,14 +201,28 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
                                     return acc;
                                 }, {});
 
+                                // Calcular operadorCerrado por registro (registroActual existe en este scope)
+                                // const operadorCerrado = Number(registroActual?.respuesta?.[1]?.valor) > 0;
+
                                 // Buscar metadata del formato
                                 const formatId = registroActual.formatoId || equipo.relacionFormato;
+                                const itemHorometroFin = registroActual.respuestas?.find((r: any) =>
+                                    // console.log("Revisando item para horómetro:", r.nombre) 
+                                    r.nombre?.toLowerCase().includes("Horómetro fin día")
+                                    // && 
+                                    // (r.nombre?.toLowerCase().includes("fin") || r.nombre?.toLowerCase().includes("final"))
+                                );
+
+                                const valorHorometro = itemHorometroFin
+                                    ? Number(itemHorometroFin.valor)
+                                    : Number(registroActual?.respuestas?.[1]?.valor);
+                                const preoperacionalCerrado = valorHorometro > 0;
                                 const metaFormato = formatoData.find(f => f.id === formatId) as any;
 
                                 return (
                                     <div key={registroActual.id} className="p-8 md:p-12 border-b-2 border-slate-100 last:border-0 print:break-after-page">
                                         {/* CABECERA TIPO TABLA FORMAL */}
-                                        <div className="border-2 border-slate-900 mb-8 overflow-hidden rounded-t-xl">
+                                        <div className="border-2 border-slate-900 mb-2 overflow-hidden rounded-t-xl">
                                             <div className="grid grid-cols-4 border-b-2 border-slate-900">
                                                 <div className="col-span-1 p-4 flex items-center justify-center border-r-2 border-slate-900">
                                                     <div className="font-black text-xl italic tracking-tighter">PRE-OP</div>
@@ -227,25 +252,40 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
                                                     <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Placa / Serial</label>
                                                     <p className="text-[11px] font-black uppercase text-slate-800">{equipo.placa} / {equipo.serial || "N/A"}</p>
                                                 </div>
-                                                <div className="p-3 border-b-2 border-slate-900">
-                                                    <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Fecha de Inspección</label>
-                                                    <p className="text-[11px] font-black uppercase text-slate-800">{new Date(registroActual.fechaInspeccion + "T00:00:00").toLocaleDateString("es-CO", { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                                </div>
-                                                <div className="p-3 border-r-2 border-slate-900">
+                                           
+                                                    
+                                                    <div className="p-3 border-slate-900 border-b-2">
+                                                        <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Ubicación</label>
+                                                        <p className="text-[11px] font-black uppercase text-slate-800 leading-tight">{equipo.proyecto} - {equipo.ubicacion}</p>
+                                                    </div>
+                                                {/* <div className="p-3 border-r-2 border-slate-900">
                                                     <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Se realizó</label>
                                                     <p className="text-[9px] font-bold uppercase text-slate-800">
                                                         {registroActual.creadoEn ? new Date(registroActual.creadoEn + "T00:00:00").toLocaleDateString("es-CO", { day: '2-digit', month: 'long', year: 'numeric' }) : "Sin fecha registro"}
                                                     </p>
-                                                </div>
-                                                <div className="p-3 border-r-2 border-slate-900">
-                                                    <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Ubicación</label>
-                                                    <p className="text-[11px] font-black uppercase text-slate-800 leading-tight">{equipo.proyecto} - {equipo.ubicacion}</p>
-                                                </div>
-                                                <div className="p-3 flex items-center justify-center text-center">
+                                                </div> */}
+
+                                                {/* <div className="p-3 flex items-center justify-center text-center">
+
                                                     <div>
-                                                        <p className="text-[8px] font-bold uppercase opacity-60">Estado</p>
-                                                        <p className="text-[12px] font-black uppercase tracking-widest">{registroActual.estado}</p>
+                                                        <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Fe de Inspección</label>
+                                                        <p className="text-[11px] font-black uppercase text-slate-800">{new Date(registroActual.fechaInspeccion + "T00:00:00").toLocaleDateString("es-CO", { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                                                     </div>
+                                                    <div>
+                                                        <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Fe de registro</label>
+                                                        <p className="text-[11px] font-black uppercase text-slate-800">{registroActual.creadoEn ? new Date(registroActual.creadoEn + "T00:00:00").toLocaleDateString("es-CO", { day: '2-digit', month: 'long', year: 'numeric' }) : "Sin fecha registro"}</p>
+                                                    </div>
+
+                                                </div> */}
+                                            </div>
+                                            <div className="grid grid-cols-2 bg-white">
+                                                <div className="p-3">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Fecha de Inspección</label>
+                                                    <p className="text-[11px] font-black uppercase text-slate-800">{new Date(registroActual.fechaInspeccion + "T00:00:00").toLocaleDateString("es-CO", { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                                </div>
+                                                <div className="p-3 ">
+                                                    <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Fecha de registro</label>
+                                                    <p className="text-[11px] font-black uppercase text-slate-800">{registroActual.creadoEn ? new Date(registroActual.creadoEn + "T00:00:00").toLocaleDateString("es-CO", { day: '2-digit', month: 'long', year: 'numeric' }) : "Sin fecha registro"}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -254,7 +294,7 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
                                         <div className="border-2 border-slate-900 overflow-hidden">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest">
+                                                    <tr className="text-slate-800 border-b-2 border-slate-900 text-[9px] font-black uppercase tracking-widest">
                                                         <th className="p-3 border-r border-white/20 w-[60%]">Ítem de Inspección</th>
                                                         <th className="p-3 w-32 text-center border-r border-white/20">Estado</th>
                                                         <th className="p-3">Observaciones / Hallazgos</th>
@@ -284,37 +324,165 @@ const VisualizadorReporte: React.FC<VisualizadorReporteProps> = ({ onClose, equi
                                         </div>
 
                                         {/* SECCIÓN DE FIRMAS REDUCIDA EN ALTO */}
-                                        <div className="grid grid-cols-4 gap-0 border-2">
-                                            <div className="flex flex-col">
-                                                <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">Operador</div>
-                                                <div className="h-20 flex items-center justify-center p-3 relative">
-                                                    {registroActual.firmas?.operador?.firmaImg && <img src={registroActual.firmas.operador.firmaImg} className="h-full object-contain mix-blend-multiply" />}
-                                                </div>
-                                                <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase truncate">
-                                                    {equipo.asignadoOperador?.nombre}
-                                                </div>
+                                        <div>
+                                            <div className="grid grid-cols-4 border-2 border-slate-900">
+
+                                                {roles.map((rol) => {
+                                                    const firmaKey =
+                                                        rol === 'COORDINADOR'
+                                                            ? 'copas'
+                                                            : rol.toLowerCase();
+
+                                                    const firma = registroActual.firmas?.[firmaKey];
+                                                    const estaFirmado = firma?.firmado;
+
+                                                    return (
+                                                        <div
+                                                            key={rol}
+                                                            className="flex flex-col flex-1 border-r-2 last:border-r-0 border-slate-700"
+                                                        >
+                                                            {/* Header */}
+                                                            <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">
+                                                                {rol}
+                                                            </div>
+
+                                                            {/* Área firma */}
+                                                            <div className={`h-20 flex items-center justify-center p-3 relative ${!preoperacionalCerrado ? 'bg-slate-50' : ''}`}>
+
+                                                                {!preoperacionalCerrado && rol !== 'OPERADOR' ? (
+                                                                    <div className="flex flex-col items-center gap-1 opacity-40">
+                                                                        <IconLucide name="lock" size={14} className="text-slate-400" strokeWidth={1} />
+                                                                        <span className="text-[6px] font-black text-center text-slate-500 uppercase leading-none px-2">
+                                                                            Esperando cierre<br />(Horómetro Final)
+                                                                        </span>
+                                                                    </div>
+
+                                                                ) : estaFirmado ? (
+                                                                    <img
+                                                                        src={firma?.firmaImg}
+                                                                        className="h-full object-contain mix-blend-multiply"
+                                                                    />
+
+                                                                ) : (
+                                                                    <div className="text-[8px] text-slate-300 uppercase font-bold italic opacity-40">
+                                                                        Sello Pendiente
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Footer */}
+                                                            <div className="p-1.5 border-t bg-slate-50 text-[7px] font-black text-slate-500 text-center uppercase italic">
+                                                                {rol === "OPERADOR" ? registroActual.firmas.operador.operadorNombre : registroActual?.firmas?.[firmaKey]?.usuarioNombre  ?? "Sin firmar"}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+
                                             </div>
-                                            <div className="flex flex-col">
-                                                <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">SISO</div>
-                                                <div className="h-20 flex items-center justify-center p-3">
-                                                    {registroActual.firmas?.siso?.firmado ? <img src={registroActual.firmas.siso.firmaImg} className="h-full object-contain mix-blend-multiply" /> : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>}
+
+
+                                            {/* FIRMAS DE ENCARGADOS (BLOQUEADAS SI NO HAY HORÓMETRO FINAL) */}
+                                            {/* {['OPERADOR','COORDINADOR', 'COPASST', 'SISO'].map((rol) => {
+                                                const firmaKey = rol.toLowerCase() === 'coordinador' ? 'copas' : rol.toLowerCase();
+                                                const estaFirmado = registroActual.firmas?.[firmaKey]?.firmado;
+
+                                                return (
+                                                    <div key={rol} className="flex flex-col border-r-2 last:border-r-0 border-slate-900 relative">
+                                                        <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center">{rol}</div>
+
+                                                        <div className={`h-20 flex flex-col items-center justify-center p-3 transition-all ${!preoperacionalCerrado ? 'bg-slate-50' : ''}`}>
+                                                            {!preoperacionalCerrado ? (
+                                                                <div className="flex flex-col items-center gap-1 opacity-40">
+                                                                    <IconLucide name="lock" size={14} className="text-slate-400" strokeWidth={1} />
+                                                                    <span className="text-[6px] font-black text-center text-slate-500 uppercase leading-none px-2">
+                                                                        Esperando cierre<br />(Horómetro Final)
+                                                                    </span>
+                                                                </div>
+                                                            ) : estaFirmado ? (
+                                                                <img src={registroActual.firmas[firmaKey].firmaImg} className="h-full object-contain mix-blend-multiply" />
+                                                            ) : (
+                                                                <div className="text-[8px] text-blue-400 uppercase font-bold italic animate-pulse">Listo para firmar</div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="p-1.5 border-t bg-slate-50 text-[7px] font-black text-slate-500 text-center uppercase italic">
+                                                            {rol}
+                                                            <br />
+                                                            { registroActual.firmas?.[firmaKey]?.usuarioId  ?? "Sin firmar"}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })} */}
+                                            {/* AVISO DE CIERRE PARA EL PDF */}
+                                            {/* {!preoperacionalCerrado && (
+                                                <div className="mt-4 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2">
+                                                    <IconLucide
+                                                        name="info"
+                                                        size={12}
+                                                        className="text-amber-600"
+                                                        strokeWidth={1}
+                                                    />
+                                                    <span className="text-[9px] font-bold text-amber-700 uppercase">
+                                                        Reporte sin cerrar ({
+                                                            registroActual?.respuestas
+                                                                ?.find((r: { id: string; }) => r.id === "horometroFinDia")
+                                                                ?.valor ?? 0
+                                                        }).
+                                                    </span>
                                                 </div>
-                                                <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Coord. SST</div>
-                                            </div>
-                                             <div className="flex flex-col">
+                                            )} */}
+
+
+
+
+
+
+
+
+                                            {/* COORDINADOR: deshabilitado si operador no cerró */}
+                                            {/* <div className="flex flex-col">
                                                 <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">COORDINADOR</div>
-                                                <div className="h-20 flex items-center justify-center p-3">
-                                                    {registroActual.firmas?.copas?.firmado ? <img src={registroActual.firmas.inspector.firmaImg} className="h-full object-contain mix-blend-multiply" /> : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>}
+                                                <div
+                                                    className={`h-20 flex items-center justify-center p-3 ${!valorHorometro ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                                                    title={!valorHorometro ? 'El operador debe cerrar el preoperacional antes de que otros puedan firmar' : ''}
+                                                >
+                                                    {registroActual.firmas?.copas?.firmado
+                                                        ? <img src={registroActual.firmas.copas.firmaImg} className="h-full object-contain mix-blend-multiply" />
+                                                        : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>
+                                                    }
                                                 </div>
                                                 <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Delegado</div>
-                                            </div>
-                                            <div className="flex flex-col">
+                                            </div> */}
+
+                                            {/* COPASST: deshabilitado si operador no cerró */}
+                                            {/* <div className="flex flex-col">
                                                 <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">COPASST</div>
-                                                <div className="h-20 flex items-center justify-center p-3">
-                                                    {registroActual.firmas?.copas?.firmado ? <img src={registroActual.firmas.copas.firmaImg} className="h-full object-contain mix-blend-multiply" /> : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>}
+                                                <div
+                                                    className={`h-20 flex items-center justify-center p-3 ${!valorHorometro ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                                                    title={!valorHorometro ? 'El operador debe cerrar el preoperacional antes de que otros puedan firmar' : ''}
+                                                >
+                                                    {registroActual.firmas?.copasst?.firmado
+                                                        ? <img src={registroActual.firmas.copasst.firmaImg} className="h-full object-contain mix-blend-multiply" />
+                                                        : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>
+                                                    }
                                                 </div>
-                                                <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Delegado</div>
-                                            </div>
+                                                <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Representante</div>
+                                            </div> */}
+
+                                            {/* SISO / Inspector: deshabilitado si operador no cerró */}
+                                            {/* <div className="flex flex-col">
+                                                <div className="p-1.5 bg-slate-900 text-white text-[8px] font-black uppercase text-center tracking-widest">SISO</div>
+                                                <div
+                                                    className={`h-20 flex items-center justify-center p-3 ${!valorHorometro ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                                                    title={!valorHorometro ? 'El operador debe cerrar el preoperacional antes de que otros puedan firmar' : ''}
+                                                >
+                                                    {registroActual.firmas?.siso?.firmado
+                                                        ? <img src={registroActual.firmas.siso.firmaImg} className="h-full object-contain mix-blend-multiply" />
+                                                        : <div className="text-[8px] text-slate-200 uppercase font-bold italic opacity-30">Sello Pendiente</div>
+                                                    }
+                                                </div>
+                                                <div className="p-1.5 border-t border-slate-100 bg-slate-50 text-[8px] font-bold text-slate-500 text-center uppercase">Inspector</div>
+                                            </div> */}
                                         </div>
                                     </div>
                                 );

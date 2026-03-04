@@ -1,7 +1,6 @@
 ---
 name: react-doctor
 description: Diagnose and fix React codebase health issues. Use when reviewing React code, fixing performance problems, auditing security, or improving code quality.
-version: 1.0.0
 ---
 
 # React Doctor

@@ -123,7 +123,6 @@
 // export interface RegistroEquipo {
 //   id?: string;
 //   equipoId: string;
-//   operadorId: string;
 //   formatoId: string;
 //   fecha: string;
 //   datos: Modulo[];

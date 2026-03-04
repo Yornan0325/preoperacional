@@ -7,6 +7,7 @@ import useModalStore from "../../Store/modalStore";
 import type { Equipo } from "../../typesScript/equipoFormType";
 import SignatureCanvas from 'react-signature-canvas';
 import { bulkSignInspecciones } from "../../Firebase/Service/servicesSet";
+import { auth } from "../../Firebase/firebase";
 import toast from "react-hot-toast";
 import VisualizadorReporte from "./VisualizadorReporte";
 
@@ -37,6 +38,43 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
 
     // Limpiar selección al cerrar o cambiar rol
     const cleanSelection = useCallback(() => setFechasSeleccionadas([]), [setFechasSeleccionadas]);
+
+// ✅ NUEVA FUNCIÓN DE VALIDACIÓN DE CIERRE
+    const verificarReporteCerrado = useCallback((registro: any) => {
+        if (!registro || !registro.respuestas) return false;
+        
+        // Buscamos el ítem del horómetro final (por nombre o posición)
+        const itemHorometro = registro.respuestas.find((r: any) => 
+            r.nombre?.toLowerCase().includes("horómetro") && 
+            (r.nombre?.toLowerCase().includes("fin") || r.nombre?.toLowerCase().includes("final"))
+        );
+
+        const valor = itemHorometro ? Number(itemHorometro.valor) : Number(registro.respuestas?.[1]?.valor);
+        return valor > 0;
+    }, []);
+
+    // ✅ MANEJO DE FIRMA MASIVA CON VALIDACIÓN ESTRICTA
+    const handleOpenSignature = () => {
+        const reportesIncompletos: string[] = [];
+
+        fechasSeleccionadas.forEach(fechaISO => {
+            const registro = registros.find(r => r.fechaInspeccion === fechaISO);
+            if (!verificarReporteCerrado(registro)) {
+                // Formateamos la fecha para el mensaje de error
+                reportesIncompletos.push(new Date(fechaISO + "T00:00:00").toLocaleDateString("es-CO"));
+            }
+        });
+
+        if (reportesIncompletos.length > 0) {
+            toast.error(
+                `Reporte no cerrado por el operador: ${reportesIncompletos.join(", ")}`,
+                { duration: 8000 }
+            );
+            return;
+        }
+
+        setIsSignatureModalOpen(true);
+    };
 
     // ✅ 3. MEMOIZACIÓN DE DATOS (Rendimiento)
     const fechaISO = useMemo(() => {
@@ -93,11 +131,10 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
     // Función real para guardar firmas masivas en Firebase
     const handleBulkSign = async (signature64: string) => {
         setIsSaving(true);
-        console.log("🚀 Iniciando firma masiva:", {
-            equipoId: equipo.id,
-            fechas: fechasSeleccionadas,
-            rol: userRole
-        });
+        
+        // Obtener nombre del usuario autenticado
+        const currentUser = auth.currentUser;
+        const usuarioNombre = currentUser?.displayName || currentUser?.email || 'Usuario Sin Nombre';
 
         try {
             await toast.promise(
@@ -105,7 +142,8 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
                     equipo.id,
                     fechasSeleccionadas,
                     userRole,
-                    signature64
+                    signature64,
+                    usuarioNombre
                 ),
                 {
                     loading: 'Guardando firmas en Firebase...',
@@ -218,13 +256,51 @@ const CalendarioModal: React.FC<ModalCalendarioProps> = ({ equipo }) => {
                                         <p className="text-[9px] text-slate-400 uppercase font-medium">Gestiona múltiples reportes a la vez</p>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() => setIsSignatureModalOpen(true)}
+                                        {/* <button
+                                            onClick={() => {
+                                                // Antes de abrir el modal, validar que todas las fechas seleccionadas
+                                                // tengan el preoperacional cerrado por el operador
+                                                const noCerrados = fechasSeleccionadas.filter(fechaISO => {
+                                                    const r = registros.find(rr => rr.equipoId === equipo.id && rr.fechaInspeccion === fechaISO);
+                                                    return !(r?.firmas?.operador?.cerrado);
+                                                });
+                                                if (noCerrados.length > 0) {
+                                                    toast.error('Al menos uno de los días seleccionados no está cerrado por el operador. No puede firmar.');
+                                                    return;
+                                                }
+                                                setIsSignatureModalOpen(true);
+                                            }}
                                             className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"
                                         >
                                             <IconLucide name="signature" size={16} strokeWidth={2.5} />
                                             Firmar Selección
+                                            
+                                        </button> */}
+                                        {/* <button
+                                            onClick={handleOpenSignature}
+                                            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                                        >
+                                            <IconLucide name="signature" size={16} strokeWidth={2.5} />
+                                            Firmar Selección
+                                        </button> */}
+                                        <button
+                                            onClick={handleOpenSignature}
+                                            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                                        >
+                                            <IconLucide name="signature" size={16} strokeWidth={2.5} />
+                                            Firmar Selección
                                         </button>
+
+                                        {/* <button
+                                            onClick={handleReportAction}
+                                            className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"
+                                        >
+                                            <IconLucide name={window.innerWidth < 768 ? "printer" : "fileText"} size={16} strokeWidth={2.5} />
+                                            {window.innerWidth < 768 ? "Descargar Reportes" : "Visualizar Reportes"}
+                                        </button> */}
+                                        <p className="text-[8px] text-slate-500 uppercase text-center mt-2 px-4 leading-tight">
+                                            * Solo se permiten firmar reportes que tengan el horómetro final registrado por el operador.
+                                        </p>
                                         <button
                                             onClick={handleReportAction}
                                             className="w-full flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all"
@@ -313,7 +389,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ onClose, onSave, isSavi
     };
 
     return (
-        <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
                 <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <div>

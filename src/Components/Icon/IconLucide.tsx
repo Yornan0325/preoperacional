@@ -62,6 +62,7 @@ import {
   CloudBackup,
   HardHat,
   Download,
+  Lock
 } from "lucide-react";
 
 type IconName =
@@ -128,6 +129,7 @@ type IconName =
   | "cloudBackup"
   | "hardHat"
   | "download"
+  | "lock"
 
 const icons: Record<IconName, React.ElementType> = {
   truck: Truck, // Camion
@@ -191,7 +193,8 @@ const icons: Record<IconName, React.ElementType> = {
   pencil: Pencil, // Lapiz
   cloudBackup: CloudBackup,
   hardHat: HardHat,
-  download: Download
+  download: Download,
+  lock: Lock
 };
 
 interface IconProps {

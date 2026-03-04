@@ -194,6 +194,8 @@ export interface ChecklistFormato {
  * Este es el modelo completo que se guarda en BD
  */
 export interface FormatoCompleto extends FormatoGeneral {
+  equipoId: string;
+  fechaInspeccion: string; // Nueva propiedad
   checklist: SeccionChecklist[]; // Del ChecklistFormato
   observaciones?: string;
 }
@@ -268,7 +270,7 @@ export interface InspeccionPreoperacional {
   formatoId: string; // Para saber qué checklist usar
 
   // Quién y cuándo
-  operadorId: string;
+ 
   operadorNombre?: string; // Desnormalizado para reportes
   fecha: string; // YYYY-MM-DD
   horaInicio: string; // HH:mm
@@ -295,6 +297,22 @@ export interface InspeccionPreoperacional {
 }
 
 export type Preoperacional = InspeccionPreoperacional;
+
+/**
+ * Tipo extendido para el payload que se guarda desde la UI
+ * Contiene información adicional que la app usa (firmas, progreso, etc.)
+ */
+export type InspeccionGuardar = InspeccionPreoperacional & {
+  placa?: string;
+  nombreFormato?: string;
+  // No redefinimos formatoId (ya existe en InspeccionPreoperacional)
+  fechaInspeccion?: string; // Para compatibilidad con payloads existentes
+  operadorNombre?: string; // Nombre o email del operador
+  firmaOperador?: string | null;
+  firmas?: Record<string, any>;
+  estadoGlobal?: string;
+  progresoFirmas?: number;
+};
 
 // ============================================
 // 6. TIPOS AUXILIARES PARA LA UI

@@ -1,46 +1,26 @@
-import { collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, increment } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 // import type { Equipo } from '../../typesScript/equipoFormType';
-import type { FormatoCompleto } from '../../typesScript/preoperacionalType';
+import type { FormatoCompleto, InspeccionGuardar } from '../../typesScript/preoperacionalType';
 
 
 // Definimos y exportamos la interfaz para que el Store pueda usarla
-export interface EquipoPayload {
-    nombreEquipo: string;
-    placa: string;
-    marca: string;
-    serial: string;
-    relacionFormato: string; // Aquí llegará "VEHICULO_LIVIANO"
-    estado: string;
-    proyecto: string;
-    ubicacion: string;
-    asignadoOperador: {
-        nombre: string;
-        cargo: string;
-    };
-    imagen?: string;
-}
-
-// export const createEquipo = async (data: any) => {
-//     try {
-//         // Generamos un ID de documento basado en la placa (opcional) o dejamos que Firebase lo cree
-//         const equipoRef = doc(collection(db, "equipos"), data.placa.toUpperCase());
-
-//         const payload = {
-//             ...data,
-//             id: equipoRef.id,
-//             // Aquí nos aseguramos de que el ID del formato sea el que viene del Select
-//             relacionFormato: data.relacionFormato, 
-//             updatedAt: serverTimestamp(),
-//         };
-
-//         await setDoc(equipoRef, payload, { merge: true });
-//         return equipoRef.id;
-//     } catch (error) {
-//         console.error("Error al crear equipo:", error);
-//         throw error;
-//     }
-// };
+// export interface EquipoPayload {
+//     nombreEquipo: string;
+//     placa: string;
+//     marca: string;
+//     serial: string;
+//     relacionFormato: string; // Aquí llegará "VEHICULO_LIVIANO"
+//     estado: string;
+//     proyecto: string;
+//     ubicacion: string;
+//     asignadoOperador: {
+//         nombre: string;
+//         cargo: string;
+//     };
+//     imagen?: string;
+// }
+ 
 export const createEquipo = async (data: any) => {
     try {
         const placaUpper = data.placa.toUpperCase().trim();
@@ -124,7 +104,45 @@ export const updateEquipoInFirebase = async (id: string, data: Partial<any>) => 
     return await updateDoc(equipoRef, data);
 };
 
-export const saveInspeccionDiaria = async (payload: any) => {
+export const guardarDatosVisualizacion = async (equipoId: string, datos: any) => {
+    try {
+        const equipoRef = doc(db, "equipos", equipoId);
+        const visualizarRef = doc(equipoRef, "visualizar", "datos");
+        
+        const payload = {
+            vencimientoExtintor: datos.vencimientoExtintor || null,
+            vencimientoSOAT: datos.vencimientoSOAT || null,
+            vencimientoTecnoMecanica: datos.vencimientoTecnoMecanica || null,
+            otros: datos.otros || {},
+            updatedAt: serverTimestamp(),
+        };
+        
+        await setDoc(visualizarRef, payload, { merge: true });
+        return true;
+    } catch (error) {
+        console.error("Error al guardar datos de visualización:", error);
+        throw error;
+    }
+};
+
+export const cargarDatosVisualizacion = async (equipoId: string) => {
+    try {
+        const equipoRef = doc(db, "equipos", equipoId);
+        const visualizarRef = doc(equipoRef, "visualizar", "datos");
+        
+        const docSnap = await getDoc(visualizarRef);
+        
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error("Error al cargar datos de visualización:", error);
+        throw error;
+    }
+};
+
+export const saveInspeccionDiaria = async (payload: InspeccionGuardar) => {
     try {
         const id = `${payload.equipoId}_${payload.fechaInspeccion}`;
         const ref = doc(db, "InspeccionesDiarias", id);
@@ -143,14 +161,28 @@ export const bulkSignInspecciones = async (
     equipoId: string,
     fechas: string[],
     rol: string,
-    firmaImg: string
+    firmaImg: string,
+    usuarioNombre: string = 'Usuario Sin Nombre'
 ) => {
     console.log(`🛠️ [bulkSignInspecciones] Iniciando para ${fechas.length} documentos. Rol: ${rol}`);
 
     try {
+        // Para cada fecha validamos que el operador haya cerrado el preoperacional antes
         const batch = fechas.map(async (fechaISO) => {
             const docId = `${equipoId}_${fechaISO}`;
             const ref = doc(db, "InspeccionesDiarias", docId);
+
+            // Leemos el documento para validar estado de cierre del operador
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+                throw new Error(`Documento no encontrado: ${docId}`);
+            }
+            const data: any = snap.data();
+
+            // Si el operador no ha marcado 'cerrado', rechazamos la operación
+            if (!data?.firmas?.operador?.cerrado) {
+                throw new Error(`El operador no ha cerrado el preoperacional para ${fechaISO}. Firma denegada.`);
+            }
 
             // Mapeo de roles internos de firma
             let campoFirma = rol.toLowerCase();
@@ -159,11 +191,12 @@ export const bulkSignInspecciones = async (
 
             console.log(`📝 Actualizando documento: ${docId}, campo: firmas.${campoFirma}`);
 
-            const updateData = {
+            const updateData: any = {
                 [`firmas.${campoFirma}`]: {
                     firmado: true,
                     fecha: new Date().toISOString(),
-                    firmaImg: firmaImg
+                    firmaImg: firmaImg,
+                    usuarioNombre: usuarioNombre
                 },
                 progresoFirmas: increment(1),
                 updatedAt: serverTimestamp()

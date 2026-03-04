@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, where, documentId } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, documentId, doc, getDoc } from 'firebase/firestore';
 import type { Equipo } from '../../typesScript/equipoFormType';
 import { db } from '../firebase';
 import type { FormatoPreoperacional } from '../../typesScript/preoperacionalType';
@@ -76,6 +76,27 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
         return mapaRegistros;
     } catch (error) {
         console.error("❌ Error en getEstadoMensualEquipos:", error);
+        throw error;
+    }
+};
+
+/**
+ * Obtiene todos los datos del documento de usuario en la colección "users"
+ * usando el correo como identificador.
+ */
+export const getUserDataByEmail = async (email: string): Promise<Record<string, any> | null> => {
+    try {
+        const userRef = doc(db, 'users', email);
+        const snap = await getDoc(userRef);
+
+        if (!snap.exists()) {
+            console.warn(`Documento de usuario no encontrado para correo: ${email}`);
+            return null;
+        }
+
+        return snap.data();
+    } catch (error) {
+        console.error('Error al obtener datos de usuario:', error);
         throw error;
     }
 };

@@ -21,10 +21,10 @@ export interface Section {
     items: ChecklistItem[];
 }
 
-export type StepTwoForm = {
-    title: string;
-    values: Record<string, any>;
-};
+// export type StepTwoForm = {
+//     title: string;
+//     values: Record<string, any>;
+// };
 export interface InspectionItem {
     pregunta: string;
     tipo: ItemType;

@@ -26,9 +26,6 @@ const Calendario: React.FC<CalendarioProps> = ({ userRole = "OPERADOR" }) => {
       const hoy = new Date();
       const mes = (hoy.getMonth() + 1).toString().padStart(2, '0');
       const anio = hoy.getFullYear().toString();
-      console.log("equipoActivo.id", equipoActivo.id);
-      console.log("mes", mes);
-      console.log("anio", anio);
       cargarRegistros(equipoActivo.id, mes, anio);
     }
   }, [equipoActivo?.id, cargarRegistros]);

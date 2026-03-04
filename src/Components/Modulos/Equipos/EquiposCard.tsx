@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
-import { Pencil, UserPlus, MapPin, Tag } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Pencil, UserPlus, MapPin, Tag, Eye } from "lucide-react";
 import type { Equipo } from "../../typesScript/equipoFormType";
+import VisualizarEquipoModal from './VisualizarEquipoModal';
 import { EstadoEquipoColor } from "../../Utils/opciones";
 import BadgeEstadoFirmas from "./BadgeEstadoFirmas";
 import { usePreoperacionalStore } from "../../Store/usePreoperacionalStore";
@@ -12,6 +13,7 @@ interface EquiposCardProps {
 }
 
 const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEditarEquipo }: EquiposCardProps) => {
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
   const { registros } = usePreoperacionalStore();
 
@@ -46,7 +48,8 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
   }
 
   return (
-    <div
+    <>
+      <div
       onClick={(e) => {
         e.stopPropagation();
         handleModalCalendario(equipo);
@@ -74,6 +77,16 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
             className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
           >
             <Pencil size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsViewOpen(true);
+            }}
+            className="p-2 ml-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-white/50 hover:text-slate-700 transition-colors"
+            title="Ver equipo"
+          >
+            <Eye size={14} />
           </button>
         </div>
 
@@ -164,7 +177,9 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
           {equipo.estado}
         </span>
       </div> */}
-    </div>
+      </div>
+      <VisualizarEquipoModal equipo={equipo} isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} />
+    </>
   );
 });
 

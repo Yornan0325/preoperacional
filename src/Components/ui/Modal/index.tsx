@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
     : `relative w-[calc(100%-2rem)] ${maxWConfig[maxWidth]} rounded-3xl shadow-2xl ring-1 ring-black/5`;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-999 flex items-center justify-center p-4 sm:p-6">
       {/* Overlay con desenfoque refinado */}
       <div
         className="fixed inset-0 bg-gray-900/40 backdrop-blur-md transition-opacity animate-in fade-in duration-300"

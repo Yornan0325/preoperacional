@@ -8,9 +8,12 @@ import { useFormatoGetDataStore } from "../../Store/FormatoStore/formatoGetDataS
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { saveInspeccionDiaria } from "../../Firebase/Service/servicesSet";
+import { auth } from "../../Firebase/firebase";
 import { ArrowLeftIcon, Camera, Check, PenTool, X } from "lucide-react";
 import Loader from "../../Utils/MensajesEIndicadores/Spinner";
 import useModalStore from "../../Store/modalStore";
+import type { SeccionChecklist, InspeccionGuardar } from "../../typesScript/preoperacionalType";
+ 
 
 const CheckListOperador = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +25,7 @@ const CheckListOperador = () => {
     const sigCanvas = useRef<any>(null);
     const { openModal } = useModalStore();
 
-
+    
     const navigate = useNavigate();
 
     const fechaIso = useMemo(() =>
@@ -135,16 +138,46 @@ const CheckListOperador = () => {
         }
 
 
+        // Obtener usuario autenticado
+        const currentUser = auth.currentUser;
+        const operadorNombre = currentUser?.displayName || currentUser?.email || 'Operador Sin Nombre';
+
         // Payload final estructurado para el registro de inspección
         // Transformar respuestas incluyendo nombre del item
-        const respuestasTransformadas = formato?.checklist.flatMap((seccion: any) =>
-            seccion.items?.map((campo: any) => ({
-                id: campo.id,
-                nombre: campo.nombre,
-                seccion: seccion.nombre,
-                valor: formData.respuestas?.[campo.id] ?? "B",
-                observacion: formData.observaciones?.[campo.id] || null
-            }))
+        const respuestasTransformadas = formato?.checklist.flatMap((seccion: SeccionChecklist) =>
+            seccion.items?.map((campo: any) => {
+                const raw = formData.respuestas?.[campo.id];
+                let valor: any;
+
+                // 1. Booleanos / Checkbox
+                if (campo.tipo === 'boolean' || campo.tipo === 'checkbox') {
+                    valor = (raw !== undefined && raw !== null) ? raw : 'B';
+                }
+
+                // 2. Números (Ahora con fallback a 0)
+                else if (campo.tipo === 'number') {
+                    if (raw === '' || raw == null) {
+                        valor = 0; // Si está vacío, guardamos 0
+                    } else {
+                        const n = Number(raw);
+                        // Si es un número válido lo dejamos, si es basura (NaN) ponemos 0
+                        valor = !isNaN(n) ? n : 0;
+                    }
+                }
+
+                // 3. Textos y otros
+                else {
+                    valor = (raw !== undefined && raw !== null) ? String(raw) : '';
+                }
+
+                return {
+                    id: campo.id,
+                    nombre: campo.nombre,
+                    seccion: seccion.nombre,
+                    valor,
+                    observacion: formData.observaciones?.[campo.id] || null
+                };
+            })
         );
         const payload = {
             equipoId: equipoActivo?.id,
@@ -154,14 +187,15 @@ const CheckListOperador = () => {
             fechaInspeccion: fecha?.toISOString().split('T')[0],
             creadoEn: new Date().toISOString().split('T')[0],
             respuestas: respuestasTransformadas,
-            firmaOperador: signatureData,
             estado: "PENDIENTE",
             // Gestión de Firmas y Estados
             firmas: {
                 operador: {
                     firmado: true,
                     fecha: new Date().toISOString(),
-                    firmaImg: signatureData
+                    firmaImg: signatureData,
+                    cerrado: true,
+                    operadorNombre: operadorNombre
                 },
                 inspector: {
                     firmado: false,
@@ -185,7 +219,8 @@ const CheckListOperador = () => {
         };
         // Guardar en Firebase
         try {
-            await saveInspeccionDiaria(payload);
+            // Guardamos usando el tipo de payload esperado para inspecciones
+            await saveInspeccionDiaria(payload as unknown as InspeccionGuardar);
             toast.success('Inspección guardada correctamente');
             navigate(-1);
         } catch (error) {
@@ -279,7 +314,7 @@ const CheckListOperador = () => {
                                                     {/* FILA PRINCIPAL: TEXTO IZQUIERDA | OPCIONES DERECHA */}
                                                     <div className="flex items-center gap-3 w-full">
                                                         <div className="flex items-center  flex-1 gap-3 min-w-0">
-                                                            <span className={`text-[12px]  inline-block  align-middle   font-semibold uppercase leading-snug block transition-colors
+                                                            <span className={`text-[12px]  inline-block  align-middle   font-semibold uppercase leading-snug transition-colors
                                                                 ${valorActual ? 'text-slate-900' : 'text-slate-500'}`}>
                                                                 {campo.nombre}
                                                             </span>
@@ -375,7 +410,7 @@ const CheckListOperador = () => {
 
                 {/* MODAL DE FIRMA FULL SCREEN */}
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in slide-in-from-bottom-5">
+                    <div className="fixed inset-0 z-100 bg-white flex flex-col animate-in fade-in slide-in-from-bottom-5">
                         <div className="p-4 border-b flex justify-between items-center">
                             <h3 className="text-xs font-black uppercase italic">Validación Digital</h3>
                             <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-100 rounded-full"><X size={20} /></button>

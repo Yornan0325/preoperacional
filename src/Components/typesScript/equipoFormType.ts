@@ -26,4 +26,9 @@ export interface Equipo {
     cargo: string;
   } | null;
   mensaje?: string;
+  // Fechas de vencimiento y documentación
+  vencimientoExtintor?: string; // ISO date YYYY-MM-DD
+  vencimientoSOAT?: string; // ISO date
+  vencimientoTecnoMecanica?: string; // ISO date
+  otros?: Record<string, any>;
 }
