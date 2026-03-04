@@ -70,21 +70,7 @@
   z-index: 2;
 }
 
-/* Estados personalizados */
-/* .tile-aprobado {
-  background-color: #ecfdf5 !important;
-  color: #059669 !important;
-} */
 
-/* .tile-pendiente {
-  background-color: #fffbeb !important;
-  color: #d97706 !important;
-} */
-
-/* .tile-rechazado {
-  background-color: #fff1f2 !important;
-  color: #e11d48 !important;
-} */
 
 /* Día actual */
 .react-calendar__tile--now {

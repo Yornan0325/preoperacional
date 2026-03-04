@@ -10,7 +10,7 @@ const BadgeEstadoFirmas = ({ inspector, siso, copas }: any) => {
                 />
             </div>
             <span className="text-[9px] font-black uppercase text-slate-500">
-                {total}/3 Firmas (SISO, Insp, Copas)
+                {total}/3 Firmas (Siso, Insp, Copas)
             </span>
         </div>
     );

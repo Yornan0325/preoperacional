@@ -104,8 +104,6 @@ const VisualizarEquipoModal: React.FC<Props> = ({ equipo, isOpen, onClose }) => 
                   { label: 'Serial', val: equipo.serial || 'N/A' },
                   { label: 'Proyecto', val: equipo.proyecto || 'N/A' },
                   { label: 'Ubicación', val: equipo.ubicacion || 'N/A' },
-                  { label: 'Tipo', val: equipo.tipoEquipo || 'N/A' },
-                  { label: 'Modelo', val: equipo.modelo || 'N/A' },
                 ].map((item, i) => (
                   <div key={i} className="flex flex-col">
                     <span className="text-[9px] font-black text-slate-400 uppercase mb-1">{item.label}</span>

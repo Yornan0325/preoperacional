@@ -218,7 +218,6 @@ export interface Equipo {
   relacionEquipo: string; // "VEHÍCULO LIVIANO"
   placa: string;
   marca: string;
-  modelo: string;
   serial: string;
 
   // Ubicación y asignación
@@ -310,7 +309,7 @@ export type InspeccionGuardar = InspeccionPreoperacional & {
   operadorNombre?: string; // Nombre o email del operador
   firmaOperador?: string | null;
   firmas?: Record<string, any>;
-  estadoGlobal?: string;
+ estado?: EstadoPreoperacional; // Para facilitar cambios de estado desde la UI
   progresoFirmas?: number;
 };
 
@@ -340,7 +339,6 @@ export interface EquipoFormData {
   relacionEquipo: string;
   placa: string;
   marca: string;
-  modelo: string;
   serial: string;
   proyecto: string;
   ubicacion: string;

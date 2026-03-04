@@ -2,24 +2,8 @@ import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updat
 import { db } from '../firebase';
 // import type { Equipo } from '../../typesScript/equipoFormType';
 import type { FormatoCompleto, InspeccionGuardar } from '../../typesScript/preoperacionalType';
+import toast from 'react-hot-toast';
 
-
-// Definimos y exportamos la interfaz para que el Store pueda usarla
-// export interface EquipoPayload {
-//     nombreEquipo: string;
-//     placa: string;
-//     marca: string;
-//     serial: string;
-//     relacionFormato: string; // Aquí llegará "VEHICULO_LIVIANO"
-//     estado: string;
-//     proyecto: string;
-//     ubicacion: string;
-//     asignadoOperador: {
-//         nombre: string;
-//         cargo: string;
-//     };
-//     imagen?: string;
-// }
  
 export const createEquipo = async (data: any) => {
     try {
@@ -145,7 +129,7 @@ export const cargarDatosVisualizacion = async (equipoId: string) => {
 export const saveInspeccionDiaria = async (payload: InspeccionGuardar) => {
     try {
         const id = `${payload.equipoId}_${payload.fechaInspeccion}`;
-        const ref = doc(db, "InspeccionesDiarias", id);
+        const ref = doc(db, "inspeccionesDiarias", id);
         await setDoc(ref, payload, { merge: true });
         return id;
     } catch (error) {
@@ -170,26 +154,38 @@ export const bulkSignInspecciones = async (
         // Para cada fecha validamos que el operador haya cerrado el preoperacional antes
         const batch = fechas.map(async (fechaISO) => {
             const docId = `${equipoId}_${fechaISO}`;
-            const ref = doc(db, "InspeccionesDiarias", docId);
+            const ref = doc(db, "inspeccionesDiarias", docId);
 
             // Leemos el documento para validar estado de cierre del operador
             const snap = await getDoc(ref);
             if (!snap.exists()) {
-                throw new Error(`Documento no encontrado: ${docId}`);
+                toast.error(`Documento no encontrado: ${docId}`);
             }
             const data: any = snap.data();
 
             // Si el operador no ha marcado 'cerrado', rechazamos la operación
             if (!data?.firmas?.operador?.cerrado) {
-                throw new Error(`El operador no ha cerrado el preoperacional para ${fechaISO}. Firma denegada.`);
+                toast.error(`El operador no ha cerrado el preoperacional para ${fechaISO}. Firma denegada.`);
             }
 
             // Mapeo de roles internos de firma
             let campoFirma = rol.toLowerCase();
             if (rol === 'SUPERVISOR') campoFirma = 'inspector';
-            if (rol === 'ADMIN' || rol === 'COPAS') campoFirma = 'copas';
+            if (rol === 'COPAS') campoFirma = 'copas';
+            if (rol === 'SISO') campoFirma = 'siso';
 
             console.log(`📝 Actualizando documento: ${docId}, campo: firmas.${campoFirma}`);
+
+            // Determinar el nuevo estado basado en progresoFirmas
+            const progresoActual = data?.progresoFirmas || 0;
+            const nuevoProgreso = progresoActual + 1;
+            let nuevoEstado = data?.estado || 'PENDIENTE';
+
+            // Si progresoFirmas >= 4 y no está rechazado, cambiar a APROBADO
+            if (nuevoProgreso >= 4 && data?.estado !== 'RECHAZADO') {
+                nuevoEstado = 'APROBADO';
+                console.log(`✅ Estado actualizado a APROBADO (progresoFirmas: ${nuevoProgreso})`);
+            }
 
             const updateData: any = {
                 [`firmas.${campoFirma}`]: {
@@ -199,6 +195,7 @@ export const bulkSignInspecciones = async (
                     usuarioNombre: usuarioNombre
                 },
                 progresoFirmas: increment(1),
+                estado: nuevoEstado,
                 updatedAt: serverTimestamp()
             };
 

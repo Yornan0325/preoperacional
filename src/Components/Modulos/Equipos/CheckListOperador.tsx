@@ -188,7 +188,6 @@ const CheckListOperador = () => {
             creadoEn: new Date().toISOString().split('T')[0],
             respuestas: respuestasTransformadas,
             estado: "PENDIENTE",
-            // Gestión de Firmas y Estados
             firmas: {
                 operador: {
                     firmado: true,
@@ -213,9 +212,7 @@ const CheckListOperador = () => {
                     usuarioId: null
                 }
             },
-            // El estado global inicial es PENDIENTE hasta que los 3 roles validen
-            estadoGlobal: "PENDIENTE_VALIDACION",
-            progresoFirmas: 1 // (Solo el operador ha firmado)
+            progresoFirmas: 1
         };
         // Guardar en Firebase
         try {
