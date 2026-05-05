@@ -11,7 +11,7 @@ export const createEquipo = async (data: any) => {
 
         // 🔎 1. Validar que no exista otra placa igual
         const q = query(
-            collection(db, "equipos"),
+            collection(db, "preoperacional"),
             where("placa", "==", placaUpper)
         );
 
@@ -22,7 +22,7 @@ export const createEquipo = async (data: any) => {
         }
 
         // 🆔 2. Crear documento con ID automático
-        const equipoRef = doc(collection(db, "equipos"));
+        const equipoRef = doc(collection(db, "preoperacional"));
 
         const payload = {
             ...data,
@@ -60,7 +60,7 @@ export const uploadFormatoToFirebase = async (data: FormatoCompleto) => {
     //     ? data.id 
     //     : crearIdLegible(data.nombreFormato);
     const idDocumento = crearIdLegible(data.nombreFormato);
-    const formatoRef = doc(db, "plantillas_formatos", idDocumento);
+    const formatoRef = doc(db, "preoperacional", "plantillasFormatos", idDocumento);
 
     const payload = {
         ...data,
@@ -84,14 +84,14 @@ export const uploadFormatoToFirebase = async (data: FormatoCompleto) => {
 
 export const updateEquipoInFirebase = async (id: string, data: Partial<any>) => {
     // Usamos el ID del equipo para encontrar el documento en la colección 'equipos'
-    const equipoRef = doc(db, "equipos", id);
+    const equipoRef = doc(db, "preoperacional", id);
     return await updateDoc(equipoRef, data);
 };
 
 export const guardarDatosVisualizacion = async (equipoId: string, datos: any) => {
     try {
-        const equipoRef = doc(db, "equipos", equipoId);
-        const visualizarRef = doc(equipoRef, "visualizar", "datos");
+        const equipoRef = doc(db, "preoperacional", equipoId);
+        const visualizarRef = doc(equipoRef, "equipo_visualizar", "datos");
         
         const payload = {
             vencimientoExtintor: datos.vencimientoExtintor || null,
@@ -111,7 +111,7 @@ export const guardarDatosVisualizacion = async (equipoId: string, datos: any) =>
 
 export const cargarDatosVisualizacion = async (equipoId: string) => {
     try {
-        const equipoRef = doc(db, "equipos", equipoId);
+        const equipoRef = doc(db, "preoperacional", equipoId);
         const visualizarRef = doc(equipoRef, "visualizar", "datos");
         
         const docSnap = await getDoc(visualizarRef);
@@ -129,7 +129,7 @@ export const cargarDatosVisualizacion = async (equipoId: string) => {
 export const saveInspeccionDiaria = async (payload: InspeccionGuardar) => {
     try {
         const id = `${payload.equipoId}_${payload.fechaInspeccion}`;
-        const ref = doc(db, "inspeccionesDiarias", id);
+        const ref = doc(db, "preoperacional", "inspeccionesDiarias", id);
         await setDoc(ref, payload, { merge: true });
         return id;
     } catch (error) {
@@ -154,7 +154,7 @@ export const bulkSignInspecciones = async (
         // Para cada fecha validamos que el operador haya cerrado el preoperacional antes
         const batch = fechas.map(async (fechaISO) => {
             const docId = `${equipoId}_${fechaISO}`;
-            const ref = doc(db, "inspeccionesDiarias", docId);
+            const ref = doc(db, "preoperacional", "inspeccionesDiarias", docId);
 
             // Leemos el documento para validar estado de cierre del operador
             const snap = await getDoc(ref);

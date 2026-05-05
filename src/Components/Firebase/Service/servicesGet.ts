@@ -5,7 +5,7 @@ import type { FormatoPreoperacional } from '../../typesScript/preoperacionalType
 
 export const getEquiposFromFirebase = async (): Promise<Equipo[]> => {
     try {
-        const equiposRef = collection(db, 'equipos');
+        const equiposRef = collection(db, 'preoperacional');
         const querySnapshot = await getDocs(equiposRef);
 
         return querySnapshot.docs.map(doc => ({
@@ -20,7 +20,7 @@ export const getEquiposFromFirebase = async (): Promise<Equipo[]> => {
 
 export const getFormatosFromFirebase = async (): Promise<FormatoPreoperacional[]> => {
     try {
-        const formatosRef = collection(db, "plantillas_formatos");
+        const formatosRef = collection(db, "preoperacional", "plantillasFormatos");
         const q = query(formatosRef, orderBy("nombreFormato", "asc"));
         const querySnapshot = await getDocs(q);
 
@@ -45,7 +45,7 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
     try {
         // Al filtrar por documentId(), Firestore no requiere índices compuestos
         const q = query(
-            collection(db, "inspeccionesDiarias"),
+            collection(db, "preoperacional","inspeccionesDiarias"),
             where(documentId(), ">=", inicioId),
             where(documentId(), "<=", finId)
         );
