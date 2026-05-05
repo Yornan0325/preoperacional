@@ -113,8 +113,9 @@ const PaginaDeEquipos = () => {
 
           {/* Estado Vacío */}
           {equiposFiltrados.length === 0 && !loading && (
-            <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-              <p className="text-slate-400 font-medium">No se encontraron equipos con esos criterios.</p>
+            <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-400">
+              <p className="text-slate-400 font-medium">No se encontraron equipos.</p>
+              <p className="text-slate-400 font-medium">Crea uno nuevo para su visualiacion.</p>
             </div>
           )}
 

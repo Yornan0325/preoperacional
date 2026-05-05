@@ -1,11 +1,11 @@
 import { collection, getDocs, query, orderBy, where, documentId, doc, getDoc } from 'firebase/firestore';
-import type { Equipo } from '../../typesScript/equipoFormType';
+import type { Equipo, StaffMemberType } from '../../typesScript/equipoFormType';
 import { db } from '../firebase';
 import type { FormatoPreoperacional } from '../../typesScript/preoperacionalType';
 
 export const getEquiposFromFirebase = async (): Promise<Equipo[]> => {
     try {
-        const equiposRef = collection(db, 'equipos');
+        const equiposRef = collection(db, 'preoperacional');
         const querySnapshot = await getDocs(equiposRef);
 
         return querySnapshot.docs.map(doc => ({
@@ -20,7 +20,7 @@ export const getEquiposFromFirebase = async (): Promise<Equipo[]> => {
 
 export const getFormatosFromFirebase = async (): Promise<FormatoPreoperacional[]> => {
     try {
-        const formatosRef = collection(db, "plantillas_formatos");
+        const formatosRef = collection(db, "preoperacional", "plantillasFormatos");
         const q = query(formatosRef, orderBy("nombreFormato", "asc"));
         const querySnapshot = await getDocs(q);
 
@@ -45,7 +45,7 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
     try {
         // Al filtrar por documentId(), Firestore no requiere índices compuestos
         const q = query(
-            collection(db, "InspeccionesDiarias"),
+            collection(db, "preoperacional","inspeccionesDiarias"),
             where(documentId(), ">=", inicioId),
             where(documentId(), "<=", finId)
         );
@@ -84,6 +84,26 @@ export const getEstadoMensualEquipos = async (equipoId: string, mes: string, ani
  * Obtiene todos los datos del documento de usuario en la colección "users"
  * usando el correo como identificador.
  */
+// export interface StaffMemberType {
+//     cedula: string;
+//     fullName: string;
+//     cargo?: string;
+// }
+
+export const getStaffMembers = async (): Promise<StaffMemberType[]> => {
+    try {
+        const staffRef = collection(db, 'staff');
+        const snapshot = await getDocs(staffRef);
+        return snapshot.docs.map(doc => ({
+            cedula: doc.id,
+            ...(doc.data() as any)
+        })) as StaffMemberType[];
+    } catch (error) {
+        console.error('Error al obtener listado de staff:', error);
+        throw error;
+    }
+};
+
 export const getUserDataByEmail = async (email: string): Promise<Record<string, any> | null> => {
     try {
         const userRef = doc(db, 'users', email);
@@ -100,25 +120,3 @@ export const getUserDataByEmail = async (email: string): Promise<Record<string, 
         throw error;
     }
 };
-
-// export const getInspeccionesByEquipo = async (equipoId: string) => {
-//     try {
-//         const q = query(
-//             collection(db, "InspeccionesDiarias"),
-//             where("equipoId", "==", equipoId),
-//             orderBy("fechaInspeccion", "desc")
-//         );
-
-//         const querySnapshot = await getDocs(q);
-//         return querySnapshot.docs.map(doc => ({
-//             ...doc.data(),
-//             id: doc.id
-//         }));
-//     } catch (error) {
-//         console.error("Error al obtener inspecciones por equipo:", error);
-//         if (error instanceof Error && error.message.includes("index")) {
-//             console.warn("Se requiere crear un ID compuesto en Firebase para equipoId y fechaInspeccion");
-//         }
-//         throw error;
-//     }
-// };

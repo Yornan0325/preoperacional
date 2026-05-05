@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { SaveIcon, ArrowLeftIcon, ClipboardCheck, Truck, ShieldCheck, Tractor } from 'lucide-react';
@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 // Stores
 import { useFormatoGetDataStore } from '../../../Store/FormatoStore/formatoGetDataStore';
 import { createEquipo } from '../../../Firebase/Service/servicesSet';
-import { estadoEquipo, type EstadoEquipo } from '../../../typesScript/equipoFormType';
+import { estadoEquipo, type EstadoEquipo, type StaffMemberType } from '../../../typesScript/equipoFormType';
+import { getStaffMembers } from '../../../Firebase/Service/servicesGet';
 
 type FichaEquipoForm = {
     relacionFormato: string;
@@ -18,6 +19,7 @@ type FichaEquipoForm = {
     proyecto: string;
     ubicacion: string;
     estado: EstadoEquipo;
+    operadorCedula?: string;
     nombreOperador: string;
     cargoOperador: string;
 };
@@ -26,7 +28,10 @@ const EquipoForm = () => {
     const navigate = useNavigate();
     const { formatoData, cargarFormatos, loading: loadingFormatos } = useFormatoGetDataStore();
 
-    const { register, handleSubmit, formState: { isValid, isSubmitting } } = useForm<FichaEquipoForm>({
+    const [staffList, setStaffList] = useState<StaffMemberType[]>([]);
+    const [loadingStaff, setLoadingStaff] = useState(false);
+
+    const { register, handleSubmit, formState: { isValid, isSubmitting }, watch, setValue } = useForm<FichaEquipoForm>({
         mode: 'onChange',
         defaultValues: { estado: 'DISPONIBLE' }
     });
@@ -35,21 +40,49 @@ const EquipoForm = () => {
         if (formatoData.length === 0) cargarFormatos();
     }, [formatoData.length, cargarFormatos]);
 
+    useEffect(() => {
+        const load = async () => {
+            setLoadingStaff(true);
+            try {
+                const list = await getStaffMembers();
+                setStaffList(list);
+            } catch (err) {
+                console.error('Error cargando staff:', err);
+            } finally {
+                setLoadingStaff(false);
+            }
+        };
+        if (staffList.length === 0) load();
+    }, []);
+
+    const cedulaSel = watch('operadorCedula');
+    useEffect(() => {
+        if (cedulaSel) {
+            const persona = staffList.find(s => s.cedula === cedulaSel);
+            if (persona) {
+                setValue('nombreOperador', persona.fullName);
+                if (persona.cargo) setValue('cargoOperador', persona.cargo);
+            }
+        }
+    }, [cedulaSel, staffList, setValue]);
+
     const onSubmit = async (data: FichaEquipoForm) => {
         const loadingToast = toast.loading("Sincronizando con la base de datos...");
         try {
-            const payload = {
+            const payload: any = {
                 ...data,
                 nombreEquipo: data.nombreEquipo.toUpperCase(),
                 placa: data.placa.toUpperCase(),
                 marca: data.marca.toUpperCase(),
                 serial: data.serial.toUpperCase(),
+
                 proyecto: data.proyecto.toUpperCase(),
                 ubicacion: data.ubicacion.toUpperCase(),
                 asignadoOperador: {
                     nombre: data.nombreOperador.toUpperCase(),
                     cargo: data.cargoOperador.toUpperCase(),
                 },
+                asignadoOperadorCedula: data.operadorCedula || null,
                 imagen: "",
                 fechaRegistro: new Date().toISOString()
             };
@@ -186,8 +219,20 @@ const EquipoForm = () => {
                             <Field label="Ubicación">
                                 <input {...register("ubicacion", { required: true })} className="border-b border-slate-200 focus:border-emerald-500 py-1 font-bold uppercase outline-none transition-all" />
                             </Field>
-                            <Field label="Operador Responsable">
-                                <input {...register("nombreOperador", { required: true })} className="border-b border-slate-200 focus:border-emerald-500 py-1 font-bold uppercase outline-none transition-all" />
+                            <Field label="Seleccione Operador">
+                                <select {...register("operadorCedula")} className="border-b border-slate-200 focus:border-emerald-500 py-1 font-bold outline-none transition-all">
+                                    <option value="">-- elegir --</option>
+                                    {staffList.map(s => (
+                                        <option key={s.cedula} value={s.cedula}>{s.fullName}</option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <Field label="Nombre Operador">
+                                <input
+                                    {...register("nombreOperador", { required: true })}
+                                    className="border-b border-slate-200 focus:border-emerald-500 py-1 font-bold uppercase outline-none transition-all"
+                                    readOnly
+                                />
                             </Field>
                             <Field label="Cargo">
                                 <input {...register("cargoOperador", { required: true })} className="border-b border-slate-200 focus:border-emerald-500 py-1 font-bold uppercase outline-none transition-all" />

@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useFormatoGetDataStore } from "../../Store/FormatoStore/formatoGetDataStore";
-import { auth } from "../../Firebase/firebase";
-import { obtenerUsuarioRegistrado } from "../../Hoock/autenticarUsuarioAdmin";
+// import { auth } from "../../Firebase/firebase";
+// import { obtenerUsuarioRegistrado } from "../../Hoock/autenticarUsuarioAdmin";
 
 interface VisualizadorReporteProps {
     onClose: () => void;

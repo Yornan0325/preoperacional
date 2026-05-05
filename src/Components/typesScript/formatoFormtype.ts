@@ -65,27 +65,7 @@ export const estadoEquipo = {
     FUERA_DE_LINEA: 'FUERA DE LINEA',
 } as const;
 
-// export type estadoEquipo = (typeof estadoEquipo)[keyof typeof estadoEquipo];
-// export type EstadoEquipo = estadoEquipo;
 
-// export interface Equipo {
-//   id: string;
-//   nombre: string;
-//   placa: string;
-//   marca: string;
-//   modelo: string;
-//   serial: string;
-//   relacionFormato: string;
-//   estado: estadoEquipo;
-//   proyecto: string;
-//   ubicacion: string;
-//   imagen: string;
-//   asignadoOperador: {
-//     nombre: string;
-//     cargo: string;
-//   } | null;
-//   mensaje?: string;
-// }
 
 
 

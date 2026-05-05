@@ -127,7 +127,7 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
         {equipo.asignadoOperador ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-sm">
+              <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-sm">
                 {getInitials(equipo.asignadoOperador.nombre)}
               </div>
               <div className="flex-1">
@@ -142,7 +142,8 @@ const EquiposCard = React.memo(({ equipo, handleModalCalendario, handleModalEdit
           </div>
         ) : (
           <button
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${equipo.estado === "MANTENIMIENTO"
+            onClick={(e) => { e.stopPropagation(); handleModalEditarEquipo(equipo); }}
+            className={`w-full z-99 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${equipo.estado === "MANTENIMIENTO"
               ? "bg-rose-50 text-rose-500 cursor-not-allowed"
               : "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"
               }`}
